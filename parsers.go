@@ -1,4 +1,4 @@
-package gitlog
+package main
 
 import (
 	"bufio"
