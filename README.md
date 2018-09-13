@@ -1,5 +1,7 @@
 # Gitlog
 
+[![Build Status](https://travis-ci.org/mauleyzaola/gitlog.svg?branch=master)](https://travis-ci.org/mauleyzaola/gitlog)
+
 Simple parsing of git repositories and get instant metrics in different formats.
 
 The idea behind this project is make easy data transformation of the contents of git files, into more workable information.
