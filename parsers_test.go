@@ -6,8 +6,12 @@ import (
 	"time"
 )
 
-func TestParseLinesToCommit(t *testing.T) {
-	t.Skip()
+func TestParseCommitLines(t *testing.T) {
+	t.Run("single commit", commitLinesSingle)
+	t.Run("multiple commits", commitLinesMultiple)
+}
+
+func commitLinesSingle(t *testing.T) {
 	source := `
 commit a77118ea8128202aab725841b44f919c889d949f
 Author:     mauleyzaola <mauricio.leyzaola@gmail.com>
@@ -18,22 +22,126 @@ CommitDate: 2018-08-26T01:04:55-05:00
     added docker build to update chain
 `
 	buffer := bytes.NewBufferString(source)
-	result, err := ParseLinesToCommits(buffer)
+	results, err := ParseCommitLines(buffer)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if expected, actual := 1, len(result); expected != actual {
+	if expected, actual := 1, len(results); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
+		return
+	}
+	firstCommit := results[0]
+	if expected, actual := time.Date(2018, 8, 26, 1, 4, 55, 0, time.UTC).Add(time.Hour*5).Unix(), firstCommit.Date.Unix(); expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := true, firstCommit.Author != nil; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+		return
+	}
+	if expected, actual := "mauleyzaola", firstCommit.Author.Name; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := "mauricio.leyzaola@gmail.com", firstCommit.Author.Email; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := "added docker build to update chain", firstCommit.Comment; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := "a77118ea8128202aab725841b44f919c889d949f", firstCommit.Hash; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+}
+
+func commitLinesMultiple(t *testing.T) {
+	source := `
+commit ea8fab32b08f8d98249be02a4f0d507d75bd7dcc (HEAD -> master, origin/master, origin/HEAD)
+Author:     mauleyzaola <mauricio.leyzaola@gmail.com>
+AuthorDate: 2018-09-13T07:23:29-05:00
+Commit:     mauleyzaola <mauricio.leyzaola@gmail.com>
+CommitDate: 2018-09-13T07:23:29-05:00
+
+    added bug report template for github
+
+commit bc8d7920224b34b32578a1e95ca4159c87f19df0
+Author:     olguichi <olguichi@gmail.com>
+AuthorDate: 2018-09-12T20:50:35-05:00
+Commit:     olguichi <olguichi@gmail.com>
+CommitDate: 2018-09-12T20:50:35-05:00
+
+    fixes #1839 - forced numeric byProduct
+
+commit 36f8eaeccaa1ddc23a6a09560d5319e6a87a1cf2
+Author:     mauleyzaola <mauricio.leyzaola@gmail.com>
+AuthorDate: 2018-08-28T18:01:18-05:00
+Commit:     mauleyzaola <mauricio.leyzaola@gmail.com>
+CommitDate: 2018-08-28T18:01:18-05:00
+
+    fixes #1828 - automate service restart
+`
+	buffer := bytes.NewBufferString(source)
+	results, err := ParseCommitLines(buffer)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	samples := []Commit{
+		{
+			Date:    time.Date(2018, 9, 13, 7, 23, 29, 0, time.UTC).Add(time.Hour * 5),
+			Author:  &Author{Name: "mauleyzaola", Email: "mauricio.leyzaola@gmail.com"},
+			Hash:    "ea8fab32b08f8d98249be02a4f0d507d75bd7dcc",
+			Comment: "added bug report template for github",
+		},
+		{
+			Date:    time.Date(2018, 9, 12, 20, 50, 35, 0, time.UTC).Add(time.Hour * 5),
+			Author:  &Author{Name: "olguichi", Email: "olguichi@gmail.com"},
+			Hash:    "bc8d7920224b34b32578a1e95ca4159c87f19df0",
+			Comment: "fixes #1839 - forced numeric byProduct",
+		},
+		{
+			Date:    time.Date(2018, 8, 28, 18, 1, 18, 0, time.UTC).Add(time.Hour * 5),
+			Author:  &Author{Name: "mauleyzaola", Email: "mauricio.leyzaola@gmail.com"},
+			Hash:    "36f8eaeccaa1ddc23a6a09560d5319e6a87a1cf2",
+			Comment: "fixes #1828 - automate service restart",
+		},
+	}
+
+	if expected, actual := len(samples), len(results); expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+		return
+	}
+
+	for i := 0; i < len(samples); i++ {
+		sample := samples[i]
+		result := results[i]
+		if expected, actual := sample.Date.Unix(), result.Date.Unix(); expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := sample.Author != nil, result.Author != nil; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+			continue
+		}
+		if expected, actual := sample.Author.Name, result.Author.Name; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := sample.Author.Email, result.Author.Email; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := sample.Comment, result.Comment; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := sample.Hash, result.Hash; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
 	}
 }
 
 func TestCommit_ParseLine(t *testing.T) {
 	t.Run("author", commitParseLineAuthor)
-	t.Run("author date", commit_parseLine5)
-	t.Run("commit hash", commit_parseLineHash)
-	t.Run("blank", commit_parseLineBlank)
-	t.Run("comment", commit_parseLineComment)
+	t.Run("author date", commitAuthorDate)
+	t.Run("commit hash", commitHash)
+	t.Run("blank", commitBlank)
+	t.Run("comment", commitComment)
 }
 
 func commitParseLineAuthor(t *testing.T) {
@@ -55,7 +163,7 @@ func commitParseLineAuthor(t *testing.T) {
 	}
 }
 
-func commit_parseLineHash(t *testing.T) {
+func commitHash(t *testing.T) {
 	c := &Commit{}
 	line := "commit a77118ea8128202aab725841b44f919c889d949f"
 	ok := c.ParseLine(line)
@@ -67,7 +175,7 @@ func commit_parseLineHash(t *testing.T) {
 	}
 }
 
-func commit_parseLine5(t *testing.T) {
+func commitAuthorDate(t *testing.T) {
 	c := &Commit{}
 	line := "AuthorDate: 2018-08-26T01:04:55-05:00"
 	ok := c.ParseLine(line)
@@ -79,7 +187,7 @@ func commit_parseLine5(t *testing.T) {
 	}
 }
 
-func commit_parseLineBlank(t *testing.T) {
+func commitBlank(t *testing.T) {
 	c := &Commit{}
 	ok := c.ParseLine("")
 	if expected, actual := false, ok; expected != actual {
@@ -87,7 +195,7 @@ func commit_parseLineBlank(t *testing.T) {
 	}
 }
 
-func commit_parseLineComment(t *testing.T) {
+func commitComment(t *testing.T) {
 	c := &Commit{}
 	line := "added docker build to update chain"
 	ok := c.ParseLine(line)

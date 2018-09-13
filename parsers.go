@@ -9,7 +9,7 @@ import (
 
 // ParseLinesToCommit - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
-func ParseLinesToCommits(reader io.Reader) ([]Commit, error) {
+func ParseCommitLines(reader io.Reader) ([]Commit, error) {
 	scanner := bufio.NewScanner(reader)
 	var (
 		result []Commit
@@ -21,8 +21,16 @@ func ParseLinesToCommits(reader io.Reader) ([]Commit, error) {
 			curr = &Commit{}
 		}
 		if ok := curr.ParseLine(line); !ok {
+			// TODO: deal with commits without comments
+			if len(curr.Comment) != 0 {
+				result = append(result, *curr)
+				curr = nil
+			}
 			continue
 		}
+	}
+	if curr != nil {
+		result = append(result, *curr)
 	}
 	return result, nil
 }
@@ -35,7 +43,7 @@ func (t *Commit) ParseLine(line string) bool {
 	}
 	switch strings.ToLower(fields[0]) {
 	case "commit":
-		if len(fields) == 2 {
+		if len(fields) >= 2 {
 			t.Hash = fields[1]
 			return true
 		}
@@ -58,9 +66,12 @@ func (t *Commit) ParseLine(line string) bool {
 			t.Date = value
 			return true
 		}
-
+	case "commit:":
+		fallthrough
+	case "commitdate:":
+		return false
 	default:
-		t.Comment = line
+		t.Comment = strings.Join(fields, " ")
 		return true
 	}
 	return false
