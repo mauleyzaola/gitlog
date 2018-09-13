@@ -26,7 +26,6 @@ func ParseCommitLines(reader io.Reader) ([]Commit, error) {
 				result = append(result, *curr)
 				curr = nil
 			}
-			continue
 		}
 	}
 	if curr != nil {
