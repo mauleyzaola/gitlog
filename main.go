@@ -9,12 +9,22 @@ import (
 )
 
 func main() {
-	var directory string
+	config := &config{
+		Directory: "./.git",
+		Output:    "commits",
+	}
 
-	flag.StringVar(&directory, "directory", "./.git", "the path to the the .git directory")
+	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the .git directory")
+	flag.StringVar(&config.Output, "output", config.Output, "the type of output to have: [commits]")
 	flag.Parse()
 
-	gitResult, err := RunGitLog(directory)
+	switch config.Output {
+	case "commits":
+	default:
+		glog.Exit("unsupported output:", config.Output)
+	}
+
+	gitResult, err := RunGitLog(config.Directory)
 	if err != nil {
 		glog.Exit(err)
 	}
