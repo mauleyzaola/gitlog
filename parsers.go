@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// ParseLinesToCommit - Tries to convert a lines of text into a slice of Commits
+// ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
 func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 	scanner := bufio.NewScanner(reader)
@@ -56,7 +56,7 @@ func findHash(fields []string) string {
 	return ""
 }
 
-// ParseLine - returns the name of the field parsed
+// ParseLine - keeps adding field data to the commit struct
 func ParseLine(commit *Commit, fields []string) {
 	if len(fields) == 0 {
 		return
