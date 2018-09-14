@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 )
@@ -20,6 +21,8 @@ Commit:     mauleyzaola <mauricio.leyzaola@gmail.com>
 CommitDate: 2018-08-26T01:04:55-05:00
 
     added docker build to update chain
+
+1	1	src/frontend/app/catalog/formula.controllers.js
 `
 	buffer := bytes.NewBufferString(source)
 	results, err := ParseCommitLines(buffer)
@@ -63,6 +66,11 @@ CommitDate: 2018-09-13T07:23:29-05:00
 
     added bug report template for github
 
+1	1	src/backend/apps/go/kaizen-consumer/main.go
+8	1	src/backend/business/formula_issue.go
+11	8	src/frontend/app/catalog/catalog-services.js
+2	1	src/frontend/templates/issue/issue/issue.html
+
 commit bc8d7920224b34b32578a1e95ca4159c87f19df0
 Author:     olguichi <olguichi@gmail.com>
 AuthorDate: 2018-09-12T20:50:35-05:00
@@ -71,6 +79,10 @@ CommitDate: 2018-09-12T20:50:35-05:00
 
     fixes #1839 - forced numeric byProduct
 
+1	0	src/backend/business/formula.go
+1	0	src/backend/interfaces/formula.go
+3	0	src/frontend/templates/server/formula_print.html
+
 commit 36f8eaeccaa1ddc23a6a09560d5319e6a87a1cf2
 Author:     mauleyzaola <mauricio.leyzaola@gmail.com>
 AuthorDate: 2018-08-28T18:01:18-05:00
@@ -78,6 +90,9 @@ Commit:     mauleyzaola <mauricio.leyzaola@gmail.com>
 CommitDate: 2018-08-28T18:01:18-05:00
 
     fixes #1828 - automate service restart
+
+30	0	.github/ISSUE_TEMPLATE/bug_report.md
+
 `
 	buffer := bytes.NewBufferString(source)
 	results, err := ParseCommitLines(buffer)
@@ -147,10 +162,7 @@ func TestCommit_ParseLine(t *testing.T) {
 func commitParseLineAuthor(t *testing.T) {
 	c := &Commit{}
 	line := "Author:     mauleyzaola <mauricio.leyzaola@gmail.com>"
-	ok := c.ParseLine(line)
-	if expected, actual := true, ok; expected != actual {
-		t.Errorf("expected:%v actual:%v", expected, actual)
-	}
+	c.ParseLine(strings.Fields(line))
 	if c.Author == nil {
 		t.Error("author is nil")
 		return
@@ -166,10 +178,7 @@ func commitParseLineAuthor(t *testing.T) {
 func commitHash(t *testing.T) {
 	c := &Commit{}
 	line := "commit a77118ea8128202aab725841b44f919c889d949f"
-	ok := c.ParseLine(line)
-	if expected, actual := true, ok; expected != actual {
-		t.Errorf("expected:%v actual:%v", expected, actual)
-	}
+	c.ParseLine(strings.Fields(line))
 	if expected, actual := "a77118ea8128202aab725841b44f919c889d949f", c.Hash; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -178,10 +187,7 @@ func commitHash(t *testing.T) {
 func commitAuthorDate(t *testing.T) {
 	c := &Commit{}
 	line := "AuthorDate: 2018-08-26T01:04:55-05:00"
-	ok := c.ParseLine(line)
-	if expected, actual := true, ok; expected != actual {
-		t.Errorf("expected:%v actual:%v", expected, actual)
-	}
+	c.ParseLine(strings.Fields(line))
 	if expected, actual := time.Date(2018, 8, 26, 1, 4, 55, 0, time.UTC).Add(time.Hour*5).Unix(), c.Date.Unix(); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -189,8 +195,23 @@ func commitAuthorDate(t *testing.T) {
 
 func commitBlank(t *testing.T) {
 	c := &Commit{}
-	ok := c.ParseLine("")
-	if expected, actual := false, ok; expected != actual {
+	c.ParseLine(nil)
+	if expected, actual := "", c.Hash; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := true, c.Date.IsZero(); expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := true, c.Author == nil; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := "", c.Comment; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := int64(0), c.Added; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := int64(0), c.Deleted; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
 }
@@ -198,11 +219,42 @@ func commitBlank(t *testing.T) {
 func commitComment(t *testing.T) {
 	c := &Commit{}
 	line := "added docker build to update chain"
-	ok := c.ParseLine(line)
-	if expected, actual := true, ok; expected != actual {
-		t.Errorf("expected:%v actual:%v", expected, actual)
-	}
+	c.ParseLine(strings.Fields(line))
 	if expected, actual := line, c.Comment; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+}
+
+func TestCommit_IsNumStat(t *testing.T) {
+	cases := []struct {
+		expected       bool
+		added, deleted int64
+		line           string
+	}{
+		{
+			expected: true,
+			added:    1,
+			deleted:  1,
+			line: "1	1	src/frontend/app/catalog/formula.controllers.js",
+		},
+		{
+			expected: false,
+			added:    0,
+			deleted:  0,
+			line:     "fixes #1828 - automate service restart",
+		},
+	}
+	commit := &Commit{}
+	for i, v := range cases {
+		ok, added, deleted := commit.numStat(v.line)
+		if expected, actual := v.expected, ok; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := v.added, added; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := v.deleted, deleted; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
 	}
 }
