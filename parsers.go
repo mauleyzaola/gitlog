@@ -70,10 +70,10 @@ func ParseLine(commit *Commit, line string) {
 			return
 		}
 	case "author:":
-		if len(fields) == 3 {
+		if len(fields) >= 3 {
 			author := &Author{
-				Name:  fields[1],
-				Email: fields[2],
+				Name:  strings.Join(fields[1:len(fields)-1], " "),
+				Email: fields[len(fields)-1],
 			}
 			author.Email = author.TrimEmailChars()
 			commit.Author = author
