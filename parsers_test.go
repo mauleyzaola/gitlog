@@ -162,7 +162,7 @@ func TestCommit_ParseLine(t *testing.T) {
 func commitParseLineAuthor(t *testing.T) {
 	c := &Commit{}
 	line := "Author:     mauleyzaola <mauricio.leyzaola@gmail.com>"
-	c.ParseLine(strings.Fields(line))
+	ParseLine(c, strings.Fields(line))
 	if c.Author == nil {
 		t.Error("author is nil")
 		return
@@ -178,7 +178,7 @@ func commitParseLineAuthor(t *testing.T) {
 func commitHash(t *testing.T) {
 	c := &Commit{}
 	line := "commit a77118ea8128202aab725841b44f919c889d949f"
-	c.ParseLine(strings.Fields(line))
+	ParseLine(c, strings.Fields(line))
 	if expected, actual := "a77118ea8128202aab725841b44f919c889d949f", c.Hash; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -187,7 +187,7 @@ func commitHash(t *testing.T) {
 func commitAuthorDate(t *testing.T) {
 	c := &Commit{}
 	line := "AuthorDate: 2018-08-26T01:04:55-05:00"
-	c.ParseLine(strings.Fields(line))
+	ParseLine(c, strings.Fields(line))
 	if expected, actual := time.Date(2018, 8, 26, 1, 4, 55, 0, time.UTC).Add(time.Hour*5).Unix(), c.Date.Unix(); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -195,7 +195,7 @@ func commitAuthorDate(t *testing.T) {
 
 func commitBlank(t *testing.T) {
 	c := &Commit{}
-	c.ParseLine(nil)
+	ParseLine(c, nil)
 	if expected, actual := "", c.Hash; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -219,13 +219,13 @@ func commitBlank(t *testing.T) {
 func commitComment(t *testing.T) {
 	c := &Commit{}
 	line := "added docker build to update chain"
-	c.ParseLine(strings.Fields(line))
+	ParseLine(c, strings.Fields(line))
 	if expected, actual := line, c.Comment; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
 }
 
-func TestCommit_IsNumStat(t *testing.T) {
+func Test_IsNumStat(t *testing.T) {
 	cases := []struct {
 		expected       bool
 		added, deleted int64
@@ -244,9 +244,9 @@ func TestCommit_IsNumStat(t *testing.T) {
 			line:     "fixes #1828 - automate service restart",
 		},
 	}
-	commit := &Commit{}
+
 	for i, v := range cases {
-		ok, added, deleted := commit.numStat(v.line)
+		ok, added, deleted := numStat(v.line)
 		if expected, actual := v.expected, ok; expected != actual {
 			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
 		}

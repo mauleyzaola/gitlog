@@ -37,7 +37,7 @@ func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 				result = append(result, curr)
 			}
 		}
-		curr.ParseLine(fields)
+		ParseLine(curr, fields)
 	}
 
 	return result, nil
@@ -57,14 +57,14 @@ func findHash(fields []string) string {
 }
 
 // ParseLine - returns the name of the field parsed
-func (t *Commit) ParseLine(fields []string) {
+func ParseLine(commit *Commit, fields []string) {
 	if len(fields) == 0 {
 		return
 	}
 	switch strings.ToLower(fields[0]) {
 	case "commit":
 		if len(fields) >= 2 {
-			t.Hash = fields[1]
+			commit.Hash = fields[1]
 			return
 		}
 	case "author:":
@@ -74,33 +74,33 @@ func (t *Commit) ParseLine(fields []string) {
 				Email: fields[2],
 			}
 			author.Email = author.TrimEmailChars()
-			t.Author = author
+			commit.Author = author
 			return
 		}
 	case "authordate:":
 		if len(fields) == 2 {
 			value, err := time.Parse(time.RFC3339, fields[1])
 			if err == nil {
-				t.Date = value
+				commit.Date = value
 				return
 			}
 		}
 	case "commit:":
 	case "commitdate:":
 	default:
-		ok, added, deleted := t.numStat(strings.Join(fields, " "))
-		if !ok && len(t.Comment) == 0 {
-			t.Comment = strings.Join(fields, " ")
+		ok, added, deleted := numStat(strings.Join(fields, " "))
+		if !ok && len(commit.Comment) == 0 {
+			commit.Comment = strings.Join(fields, " ")
 			return
 		} else {
-			t.Added += added
-			t.Deleted += deleted
+			commit.Added += added
+			commit.Deleted += deleted
 			return
 		}
 	}
 }
 
-func (t *Commit) numStat(line string) (ok bool, added, deleted int64) {
+func numStat(line string) (ok bool, added, deleted int64) {
 	values := strings.Split(line, "\t")
 	if len(values) != 3 {
 		return
