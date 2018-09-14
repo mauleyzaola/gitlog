@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 	"time"
 )
@@ -106,18 +105,24 @@ CommitDate: 2018-08-28T18:01:18-05:00
 			Author:  &Author{Name: "mauleyzaola", Email: "mauricio.leyzaola@gmail.com"},
 			Hash:    "ea8fab32b08f8d98249be02a4f0d507d75bd7dcc",
 			Comment: "added bug report template for github",
+			Added:   22,
+			Deleted: 11,
 		},
 		{
 			Date:    time.Date(2018, 9, 12, 20, 50, 35, 0, time.UTC).Add(time.Hour * 5),
 			Author:  &Author{Name: "olguichi", Email: "olguichi@gmail.com"},
 			Hash:    "bc8d7920224b34b32578a1e95ca4159c87f19df0",
 			Comment: "fixes #1839 - forced numeric byProduct",
+			Added:   5,
+			Deleted: 0,
 		},
 		{
 			Date:    time.Date(2018, 8, 28, 18, 1, 18, 0, time.UTC).Add(time.Hour * 5),
 			Author:  &Author{Name: "mauleyzaola", Email: "mauricio.leyzaola@gmail.com"},
 			Hash:    "36f8eaeccaa1ddc23a6a09560d5319e6a87a1cf2",
 			Comment: "fixes #1828 - automate service restart",
+			Added:   30,
+			Deleted: 0,
 		},
 	}
 
@@ -148,6 +153,12 @@ CommitDate: 2018-08-28T18:01:18-05:00
 		if expected, actual := sample.Hash, result.Hash; expected != actual {
 			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
 		}
+		if expected, actual := sample.Added, result.Added; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+		if expected, actual := sample.Deleted, result.Deleted; expected != actual {
+			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
 	}
 }
 
@@ -162,7 +173,7 @@ func TestCommit_ParseLine(t *testing.T) {
 func commitParseLineAuthor(t *testing.T) {
 	c := &Commit{}
 	line := "Author:     mauleyzaola <mauricio.leyzaola@gmail.com>"
-	ParseLine(c, strings.Fields(line))
+	ParseLine(c, line)
 	if c.Author == nil {
 		t.Error("author is nil")
 		return
@@ -178,7 +189,7 @@ func commitParseLineAuthor(t *testing.T) {
 func commitHash(t *testing.T) {
 	c := &Commit{}
 	line := "commit a77118ea8128202aab725841b44f919c889d949f"
-	ParseLine(c, strings.Fields(line))
+	ParseLine(c, line)
 	if expected, actual := "a77118ea8128202aab725841b44f919c889d949f", c.Hash; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -187,7 +198,7 @@ func commitHash(t *testing.T) {
 func commitAuthorDate(t *testing.T) {
 	c := &Commit{}
 	line := "AuthorDate: 2018-08-26T01:04:55-05:00"
-	ParseLine(c, strings.Fields(line))
+	ParseLine(c, line)
 	if expected, actual := time.Date(2018, 8, 26, 1, 4, 55, 0, time.UTC).Add(time.Hour*5).Unix(), c.Date.Unix(); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -195,7 +206,7 @@ func commitAuthorDate(t *testing.T) {
 
 func commitBlank(t *testing.T) {
 	c := &Commit{}
-	ParseLine(c, nil)
+	ParseLine(c, "")
 	if expected, actual := "", c.Hash; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -219,7 +230,7 @@ func commitBlank(t *testing.T) {
 func commitComment(t *testing.T) {
 	c := &Commit{}
 	line := "added docker build to update chain"
-	ParseLine(c, strings.Fields(line))
+	ParseLine(c, line)
 	if expected, actual := line, c.Comment; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
@@ -242,6 +253,12 @@ func Test_IsNumStat(t *testing.T) {
 			added:    0,
 			deleted:  0,
 			line:     "fixes #1828 - automate service restart",
+		},
+		{
+			expected: true,
+			added:    11,
+			deleted:  8,
+			line: "11	8	src/frontend/app/catalog/catalog-services.js",
 		},
 	}
 

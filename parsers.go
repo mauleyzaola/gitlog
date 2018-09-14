@@ -20,7 +20,8 @@ func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 	)
 	hashes := make(map[string]struct{})
 	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
+		line := scanner.Text()
+		fields := strings.Fields(line)
 		if len(fields) == 0 {
 			// blank line, ignore
 			continue
@@ -37,7 +38,7 @@ func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 				result = append(result, curr)
 			}
 		}
-		ParseLine(curr, fields)
+		ParseLine(curr, line)
 	}
 
 	return result, nil
@@ -57,7 +58,8 @@ func findHash(fields []string) string {
 }
 
 // ParseLine - keeps adding field data to the commit struct
-func ParseLine(commit *Commit, fields []string) {
+func ParseLine(commit *Commit, line string) {
+	fields := strings.Fields(line)
 	if len(fields) == 0 {
 		return
 	}
@@ -88,11 +90,11 @@ func ParseLine(commit *Commit, fields []string) {
 	case "commit:":
 	case "commitdate:":
 	default:
-		ok, added, deleted := numStat(strings.Join(fields, " "))
+		ok, added, deleted := numStat(line)
 		if !ok && len(commit.Comment) == 0 {
 			commit.Comment = strings.Join(fields, " ")
 			return
-		} else {
+		} else if ok {
 			commit.Added += added
 			commit.Deleted += deleted
 			return
