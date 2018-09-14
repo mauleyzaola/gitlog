@@ -2,49 +2,70 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 )
 
 // ParseLinesToCommit - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
-func ParseCommitLines(reader io.Reader) ([]Commit, error) {
+func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 	scanner := bufio.NewScanner(reader)
 	var (
-		result []Commit
+		result []*Commit
 		curr   *Commit
+		ok     bool
 	)
+	hashes := make(map[string]struct{})
 	for scanner.Scan() {
-		line := scanner.Text()
-		if curr == nil {
-			curr = &Commit{}
+		fields := strings.Fields(scanner.Text())
+		if len(fields) == 0 {
+			// blank line, ignore
+			continue
 		}
-		if ok := curr.ParseLine(line); !ok {
-			// TODO: deal with commits without comments
-			if len(curr.Comment) != 0 {
-				result = append(result, *curr)
-				curr = nil
+		hash := findHash(fields)
+		if len(hash) == 0 && curr == nil {
+			return nil, fmt.Errorf("wrong git structure")
+		}
+		if len(hash) != 0 {
+			if _, ok = hashes[hash]; !ok {
+				// new commit detected
+				curr = &Commit{Hash: hash}
+				hashes[hash] = struct{}{}
+				result = append(result, curr)
 			}
 		}
+		ParseLine(curr, fields)
 	}
-	if curr != nil {
-		result = append(result, *curr)
-	}
+
 	return result, nil
 }
 
-// ParseLine - returns true if the line value affects any field
-func (t *Commit) ParseLine(line string) bool {
-	fields := strings.Fields(line)
+func findHash(fields []string) string {
+	if len(fields) < 2 {
+		return ""
+	}
+	if fields[0] != "commit" {
+		return ""
+	}
+	if len(fields[1]) == 40 {
+		return fields[1]
+	}
+	return ""
+}
+
+// ParseLine - returns the name of the field parsed
+func ParseLine(commit *Commit, fields []string) {
 	if len(fields) == 0 {
-		return false
+		return
 	}
 	switch strings.ToLower(fields[0]) {
 	case "commit":
 		if len(fields) >= 2 {
-			t.Hash = fields[1]
-			return true
+			commit.Hash = fields[1]
+			return
 		}
 	case "author:":
 		if len(fields) == 3 {
@@ -53,25 +74,47 @@ func (t *Commit) ParseLine(line string) bool {
 				Email: fields[2],
 			}
 			author.Email = author.TrimEmailChars()
-			t.Author = author
-			return true
+			commit.Author = author
+			return
 		}
 	case "authordate:":
 		if len(fields) == 2 {
 			value, err := time.Parse(time.RFC3339, fields[1])
-			if err != nil {
-				return false
+			if err == nil {
+				commit.Date = value
+				return
 			}
-			t.Date = value
-			return true
 		}
 	case "commit:":
-		fallthrough
 	case "commitdate:":
-		return false
 	default:
-		t.Comment = strings.Join(fields, " ")
-		return true
+		ok, added, deleted := numStat(strings.Join(fields, " "))
+		if !ok && len(commit.Comment) == 0 {
+			commit.Comment = strings.Join(fields, " ")
+			return
+		} else {
+			commit.Added += added
+			commit.Deleted += deleted
+			return
+		}
 	}
-	return false
+}
+
+func numStat(line string) (ok bool, added, deleted int64) {
+	values := strings.Split(line, "\t")
+	if len(values) != 3 {
+		return
+	}
+	var err error
+	added, err = strconv.ParseInt(values[0], 10, 64)
+	if err != nil {
+		return
+	}
+	deleted, err = strconv.ParseInt(values[1], 10, 64)
+	if err != nil {
+		added = 0
+		return
+	}
+	ok = true
+	return
 }
