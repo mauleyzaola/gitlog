@@ -71,7 +71,7 @@ CommitDate: 2018-09-13T07:23:29-05:00
 2	1	src/frontend/templates/issue/issue/issue.html
 
 commit bc8d7920224b34b32578a1e95ca4159c87f19df0
-Author:     olguichi <olguichi@gmail.com>
+Author:     Olga Acevedo <olguichi@gmail.com>
 AuthorDate: 2018-09-12T20:50:35-05:00
 Commit:     olguichi <olguichi@gmail.com>
 CommitDate: 2018-09-12T20:50:35-05:00
@@ -110,7 +110,7 @@ CommitDate: 2018-08-28T18:01:18-05:00
 		},
 		{
 			Date:    time.Date(2018, 9, 12, 20, 50, 35, 0, time.UTC).Add(time.Hour * 5),
-			Author:  &Author{Name: "olguichi", Email: "olguichi@gmail.com"},
+			Author:  &Author{Name: "Olga Acevedo", Email: "olguichi@gmail.com"},
 			Hash:    "bc8d7920224b34b32578a1e95ca4159c87f19df0",
 			Comment: "fixes #1839 - forced numeric byProduct",
 			Added:   5,
