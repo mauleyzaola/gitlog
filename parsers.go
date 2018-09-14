@@ -18,7 +18,7 @@ func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 		curr   *Commit
 		ok     bool
 	)
-	hashes := make(map[string]*Commit)
+	hashes := make(map[string]struct{})
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 		if len(fields) == 0 {
@@ -30,10 +30,10 @@ func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
 			return nil, fmt.Errorf("wrong git structure")
 		}
 		if len(hash) != 0 {
-			if curr, ok = hashes[hash]; !ok {
+			if _, ok = hashes[hash]; !ok {
 				// new commit detected
 				curr = &Commit{Hash: hash}
-				hashes[hash] = curr
+				hashes[hash] = struct{}{}
 				result = append(result, curr)
 			}
 		}
