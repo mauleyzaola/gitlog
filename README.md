@@ -12,10 +12,23 @@ Data output can come out in different formats such as JSON, DB Engines, XML and 
 
 ## Installation
 ```
-go get github.com/mauleyzaola/gitlog
+go get -u github.com/mauleyzaola/gitlog
 ```
 
 ## Examples
+
+### HTML Output
+Install the `gitui` program which generates the HTML view from the `gitlog` output automatically.
+```bash
+go get -u github.com/mauleyzaola/gitui
+```
+
+From within the repository you want to analyze, just pipe the output of `gitlog` to `gitui`
+```bash
+gitlog | gitui
+```
+
+### JSON Output
 From within the same repo, just type `gitlog` it will take default value `-directory=./.git`
 ```
 gitlog
