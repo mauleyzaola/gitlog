@@ -27,6 +27,7 @@ From within the repository you want to analyze, just pipe the output of `gitlog`
 ```bash
 gitlog | gitui
 ```
+![alt tag](assets/gitui-output-sample.png)
 
 ### JSON Output
 From within the same repo, just type `gitlog` it will take default value `-directory=./.git`
