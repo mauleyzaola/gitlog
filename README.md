@@ -18,21 +18,14 @@ go get -u github.com/mauleyzaola/gitlog
 ## Examples
 
 ### HTML Output
-Install the `gitui` program which generates the HTML view from the `gitlog` output automatically.
 ```bash
-go get -u github.com/mauleyzaola/gitui
-```
-
-From within the repository you want to analyze, just pipe the output of `gitlog` to `gitui`
-```bash
-gitlog | gitui
+gitlog
 ```
 ![alt tag](assets/gitui-output-sample.png)
 
 ### JSON Output
-From within the same repo, just type `gitlog` it will take default value `-directory=./.git`
 ```
-gitlog
+gitlog -format="json"
 ```
 Result is a JSON array of objects. Each one is a commit (merges are excluded)
 ```
@@ -70,27 +63,4 @@ gitlog | jq .
                },
                ...
 
-```
-
-## Parameters
-```bash
-Usage of gitlog:
-  -alsologtostderr
-    	log to standard error as well as files
-  -directory string
-    	the path to the the .git directory (default "./.git")
-  -log_backtrace_at value
-    	when logging hits line file:N, emit a stack trace
-  -log_dir string
-    	If non-empty, write log files in this directory
-  -logtostderr
-    	log to standard error instead of files
-  -output string
-    	the type of output to have: [commits] (default "commits")
-  -stderrthreshold value
-    	logs at or above this threshold go to stderr
-  -v value
-    	log level for V logs
-  -vmodule value
-    	comma-separated list of pattern=N settings for file-filtered logging
 ```

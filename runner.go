@@ -10,7 +10,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func RunGitLog(directory string) (io.Reader, error) {
+func runGitLog(directory string) (io.Reader, error) {
 	params := []string{fmt.Sprintf("--git-dir=%s", directory)}
 	params = append(params, strings.Fields("log --no-merges  --pretty=fuller --date=iso-strict --numstat")...)
 

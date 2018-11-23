@@ -11,12 +11,15 @@ import (
 
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
-func ParseCommitLines(reader io.Reader) ([]*Commit, error) {
+func ParseCommitLines(r interface{}) (interface{}, error) {
+	reader, ok := r.(io.Reader)
+	if !ok {
+		return nil, fmt.Errorf("cannot cast to io.Reader:%#v", r)
+	}
 	scanner := bufio.NewScanner(reader)
 	var (
 		result []*Commit
 		curr   *Commit
-		ok     bool
 	)
 	hashes := make(map[string]struct{})
 	for scanner.Scan() {
