@@ -49,7 +49,7 @@ gitlog -directory ./golang/protobuf
 
 The result goes to stdout, so it can be used to input another program. For instance `jq` to pretty format the result.
 ```bash
-gitlog | jq .
+gitlog -format json | jq .
              [
                {
                  "hash": "052453b347706cef9437eb79e703c0dc625e7bef",

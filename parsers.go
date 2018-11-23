@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +44,8 @@ func ParseCommitLines(r interface{}) (interface{}, error) {
 		}
 		ParseLine(curr, line)
 	}
+	tmp := Commits(result)
+	sort.Sort(tmp)
 
 	return result, nil
 }

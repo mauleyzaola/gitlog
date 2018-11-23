@@ -112,12 +112,12 @@ CommitDate: 2018-08-28T18:01:18-05:00
 
 	samples := []Commit{
 		{
-			Date:    time.Date(2018, 9, 13, 7, 23, 29, 0, time.UTC).Add(time.Hour * 5),
+			Date:    time.Date(2018, 8, 28, 18, 1, 18, 0, time.UTC).Add(time.Hour * 5),
 			Author:  &Author{Name: "mauleyzaola", Email: "mauricio.leyzaola@gmail.com"},
-			Hash:    "ea8fab32b08f8d98249be02a4f0d507d75bd7dcc",
-			Comment: "added bug report template for github",
-			Added:   22,
-			Deleted: 11,
+			Hash:    "36f8eaeccaa1ddc23a6a09560d5319e6a87a1cf2",
+			Comment: "fixes #1828 - automate service restart",
+			Added:   30,
+			Deleted: 0,
 		},
 		{
 			Date:    time.Date(2018, 9, 12, 20, 50, 35, 0, time.UTC).Add(time.Hour * 5),
@@ -128,12 +128,12 @@ CommitDate: 2018-08-28T18:01:18-05:00
 			Deleted: 0,
 		},
 		{
-			Date:    time.Date(2018, 8, 28, 18, 1, 18, 0, time.UTC).Add(time.Hour * 5),
+			Date:    time.Date(2018, 9, 13, 7, 23, 29, 0, time.UTC).Add(time.Hour * 5),
 			Author:  &Author{Name: "mauleyzaola", Email: "mauricio.leyzaola@gmail.com"},
-			Hash:    "36f8eaeccaa1ddc23a6a09560d5319e6a87a1cf2",
-			Comment: "fixes #1828 - automate service restart",
-			Added:   30,
-			Deleted: 0,
+			Hash:    "ea8fab32b08f8d98249be02a4f0d507d75bd7dcc",
+			Comment: "added bug report template for github",
+			Added:   22,
+			Deleted: 11,
 		},
 	}
 
