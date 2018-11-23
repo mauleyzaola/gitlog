@@ -24,9 +24,14 @@ CommitDate: 2018-08-26T01:04:55-05:00
 1	1	src/frontend/app/catalog/formula.controllers.js
 `
 	buffer := bytes.NewBufferString(source)
-	results, err := ParseCommitLines(buffer)
+	res, err := ParseCommitLines(buffer)
 	if err != nil {
 		t.Error(err)
+		return
+	}
+	results, ok := res.([]*Commit)
+	if !ok {
+		t.Errorf("cannot cast to []*Commit:%#v", res)
 		return
 	}
 	if expected, actual := 1, len(results); expected != actual {
@@ -94,11 +99,17 @@ CommitDate: 2018-08-28T18:01:18-05:00
 
 `
 	buffer := bytes.NewBufferString(source)
-	results, err := ParseCommitLines(buffer)
+	res, err := ParseCommitLines(buffer)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	results, ok := res.([]*Commit)
+	if !ok {
+		t.Errorf("cannot cast to []*Commit:%#v", res)
+		return
+	}
+
 	samples := []Commit{
 		{
 			Date:    time.Date(2018, 9, 13, 7, 23, 29, 0, time.UTC).Add(time.Hour * 5),
