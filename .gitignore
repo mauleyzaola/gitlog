@@ -6,3 +6,4 @@
 
 # packrd build files
 packrd/
+outputs/outputs-packr.go
