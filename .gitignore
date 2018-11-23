@@ -3,3 +3,6 @@
 
 # Mac os
 .DS_Store
+
+# packrd build files
+packrd/

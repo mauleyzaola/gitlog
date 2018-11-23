@@ -1,7 +1,3 @@
-package templates
-
-var JS_COMMITS = `
-
 // data must be an array of gitlog commits
 function transform(data){
     data = JSON.parse(data);
@@ -73,4 +69,3 @@ function draw(data){
 
 var raw = document.getElementById('raw');
 draw(transform(raw.innerHTML));
-`

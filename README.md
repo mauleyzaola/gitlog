@@ -11,8 +11,11 @@ So far, we are only focusing to output plain text without UI. This can change in
 Data output can come out in different formats such as JSON, DB Engines, XML and so forth.
 
 ## Installation
+
 ```
-go get -u github.com/mauleyzaola/gitlog
+go get -v github.com/gobuffalo/packr/v2/...
+go get -v github.com/mauleyzaola/gitlog
+packr2 install && packr2 clean
 ```
 
 ## Examples
