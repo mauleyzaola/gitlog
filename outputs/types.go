@@ -1,5 +1,5 @@
 package outputs
 
 type Output interface {
-	DisplayCommits(data []byte)
+	DisplayCommits(data []byte) error
 }

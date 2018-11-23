@@ -12,24 +12,26 @@ func main() {
 	config := &config{
 		Directory: "./.git",
 		Type:      "commits",
-		Format:    "json",
+		Format:    "html",
 	}
 
 	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the .git directory")
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
-	flag.StringVar(&config.Format, "format", config.Format, "the output format: [json]")
+	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
 	flag.Parse()
 
 	var (
 		output   outputs.Output
 		result   interface{}
-		outputFn func([]byte)
+		outputFn func([]byte) error
 		typeFn   func(interface{}) (interface{}, error)
 	)
 
 	switch config.Format {
 	case "json":
 		output = outputs.NewJsonOutput()
+	case "html":
+		output = outputs.NewHTMLOutput()
 	default:
 		glog.Exit("unsupported format:", config.Format)
 	}
@@ -57,5 +59,7 @@ func main() {
 		glog.Exit(err)
 	}
 
-	outputFn(data)
+	if err = outputFn(data); err != nil {
+		glog.Exit(err)
+	}
 }
