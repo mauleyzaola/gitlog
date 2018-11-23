@@ -10,12 +10,12 @@ import (
 
 func main() {
 	config := &config{
-		Directory: "./.git",
+		Directory: ".",
 		Type:      "commits",
 		Format:    "html",
 	}
 
-	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the .git directory")
+	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the git repository")
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
 	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
 	flag.Parse()
