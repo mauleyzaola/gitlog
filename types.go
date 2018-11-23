@@ -2,5 +2,6 @@ package main
 
 type config struct {
 	Directory string
-	Output    string
+	Type      string
+	Format string
 }

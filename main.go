@@ -3,38 +3,59 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 
 	"github.com/golang/glog"
+	"github.com/mauleyzaola/gitlog/outputs"
 )
 
 func main() {
 	config := &config{
 		Directory: "./.git",
-		Output:    "commits",
+		Type:      "commits",
+		Format:    "json",
 	}
 
 	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the .git directory")
-	flag.StringVar(&config.Output, "output", config.Output, "the type of output to have: [commits]")
+	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
+	flag.StringVar(&config.Format, "format", config.Format, "the output format: [json]")
 	flag.Parse()
 
-	switch config.Output {
-	case "commits":
+	var (
+		output   outputs.Output
+		result   interface{}
+		outputFn func([]byte)
+		typeFn   func(interface{}) (interface{}, error)
+	)
+
+	switch config.Format {
+	case "json":
+		output = outputs.NewJsonOutput()
 	default:
-		glog.Exit("unsupported output:", config.Output)
+		glog.Exit("unsupported format:", config.Format)
 	}
 
-	gitResult, err := RunGitLog(config.Directory)
+	switch config.Type {
+	case "commits":
+		typeFn = ParseCommitLines
+		outputFn = output.DisplayCommits
+	default:
+		glog.Exit("unsupported output:", config.Type)
+	}
+
+	gitResult, err := runGitLog(config.Directory)
 	if err != nil {
 		glog.Exit(err)
 	}
-	commits, err := ParseCommitLines(gitResult)
+
+	result, err = typeFn(gitResult)
 	if err != nil {
 		glog.Exit(err)
 	}
-	data, err := json.Marshal(&commits)
+
+	data, err := json.Marshal(&result)
 	if err != nil {
 		glog.Exit(err)
 	}
-	fmt.Print(string(data))
+
+	outputFn(data)
 }
