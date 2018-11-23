@@ -11,8 +11,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/gobuffalo/packr/v2"
 	"github.com/golang/glog"
-	"github.com/mauleyzaola/gitlog/outputs/templates"
 )
 
 type HTMLOutput struct{}
@@ -28,7 +28,13 @@ func (t *HTMLOutput) DisplayCommits(data []byte) error {
 		return err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(dir, "charts.js"), []byte(templates.JS_COMMITS), 0666); err != nil {
+	box := t.templateBox()
+	commits, err := box.Find("commits.js")
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filepath.Join(dir, "charts.js"), commits, 0666); err != nil {
 		glog.Exit(err)
 	}
 
@@ -43,7 +49,12 @@ func (t *HTMLOutput) DisplayCommits(data []byte) error {
 		string(data),
 	}
 
-	if err = t.parseFile(templates.HTML_BASE, file, raw); err != nil {
+	base, err := box.FindString("base.html")
+	if err != nil {
+		return err
+	}
+
+	if err = t.parseFile(base, file, raw); err != nil {
 		return err
 	}
 
@@ -82,4 +93,8 @@ func (t *HTMLOutput) openUrl(uri string) error {
 
 	}
 	return exec.Command(cmdName, uri).Run()
+}
+
+func (t *HTMLOutput) templateBox() *packr.Box {
+	return packr.New("templates", "./templates")
 }

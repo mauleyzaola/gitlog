@@ -3,3 +3,7 @@
 
 # Mac os
 .DS_Store
+
+# packrd build files
+packrd/
+outputs/outputs-packr.go
