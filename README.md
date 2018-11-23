@@ -32,18 +32,19 @@ Result is a JSON array of objects. Each one is a commit (merges are excluded)
 [{"hash":"052453b347706cef9437eb79e703c0dc625e7bef","author":{"name":"mauleyzaola","email":"mauricio.leyzaola@gmail.com"},"date":"2018-09-14T00:44:32-05:00","comment":"#15 - consider full names for authors","added"...
 ```
 
-You can point to another directory as well, just pass the path to the `.git/` directory. It can be relative to your current path, or absolute, either will work. For instance, these would achieve the same result, considering you are at `$GOPATH/src/github.com`
+You can point to another directory as well, just pass the path to the repository. 
+It can be relative to your current path, or absolute, either will work. For instance, these would achieve the same result, considering you are at `$GOPATH/src/github.com`
 ```
-gitlog -directory $GOPATH/src/github.com/golang/protobuf/.git
-```
-```
-gitlog -directory ../github.com/golang/protobuf/.git
+gitlog -directory $GOPATH/src/github.com/golang/protobuf
 ```
 ```
-gitlog -directory golang/protobuf/.git
+gitlog -directory ../github.com/golang/protobuf
 ```
 ```
-gitlog -directory ./golang/protobuf/.git
+gitlog -directory golang/protobuf
+```
+```
+gitlog -directory ./golang/protobuf
 ```
 
 The result goes to stdout, so it can be used to input another program. For instance `jq` to pretty format the result.

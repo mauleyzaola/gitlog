@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/golang/glog"
 )
 
 func runGitLog(directory string) (io.Reader, error) {
-	params := []string{fmt.Sprintf("--git-dir=%s", directory)}
+	params := []string{fmt.Sprintf("--git-dir=%s", filepath.Join(directory, ".git"))}
 	params = append(params, strings.Fields("log --no-merges  --pretty=fuller --date=iso-strict --numstat")...)
 
 	cmd := exec.Command("git", params...)
