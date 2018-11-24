@@ -19,8 +19,9 @@ func ParseCommitLines(name string, r interface{}) (interface{}, error) {
 	}
 	scanner := bufio.NewScanner(reader)
 	var (
-		commits []*Commit
-		curr    *Commit
+		commits          []*Commit
+		curr             *Commit
+		minDate, maxDate time.Time
 	)
 	hashes := make(map[string]struct{})
 	for scanner.Scan() {
@@ -43,6 +44,12 @@ func ParseCommitLines(name string, r interface{}) (interface{}, error) {
 			}
 		}
 		ParseLine(curr, line)
+		if minDate.IsZero() || curr.Date.Before(minDate) {
+			minDate = curr.Date
+		}
+		if maxDate.Before(curr.Date) {
+			maxDate = curr.Date
+		}
 	}
 	tmp := Commits(commits)
 	sort.Sort(tmp)
@@ -50,6 +57,8 @@ func ParseCommitLines(name string, r interface{}) (interface{}, error) {
 	return &RepoCommitCollection{
 		Name:    name,
 		Commits: commits,
+		MinDate: minDate.Unix(),
+		MaxDate: maxDate.Unix(),
 	}, nil
 }
 

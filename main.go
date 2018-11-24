@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/mauleyzaola/gitlog/outputs"
@@ -23,8 +24,11 @@ func main() {
 	var (
 		output   outputs.Output
 		result   interface{}
+		results  []interface{}
 		outputFn func([]byte) error
 		typeFn   func(name string, commits interface{}) (interface{}, error)
+		data     []byte
+		err      error
 	)
 
 	switch config.Format {
@@ -36,30 +40,32 @@ func main() {
 		glog.Exit("unsupported format:", config.Format)
 	}
 
-	switch config.Type {
-	case "commits":
-		typeFn = ParseCommitLines
-		outputFn = output.DisplayCommits
-	default:
-		glog.Exit("unsupported output:", config.Type)
-	}
+	for _, repo := range strings.Fields(config.Directory) {
+		switch config.Type {
+		case "commits":
+			typeFn = ParseCommitLines
+			outputFn = output.DisplayCommits
+		default:
+			glog.Exit("unsupported output:", config.Type)
+		}
 
-	gitResult, err := runGitLog(config.Directory)
-	if err != nil {
-		glog.Exit(err)
-	}
+		gitResult, err := runGitLog(repo)
+		if err != nil {
+			glog.Exit(err)
+		}
 
-	repoName, err := repoNameFromPath(config.Directory)
-	if err != nil {
-		glog.Exit(err)
-	}
-	result, err = typeFn(repoName, gitResult)
-	if err != nil {
-		glog.Exit(err)
-	}
+		repoName, err := repoNameFromPath(config.Directory)
+		if err != nil {
+			glog.Exit(err)
+		}
+		result, err = typeFn(repoName, gitResult)
+		if err != nil {
+			glog.Exit(err)
+		}
 
-	data, err := json.Marshal(&result)
-	if err != nil {
+		results = append(results, result)
+	}
+	if data, err = json.Marshal(&results); err != nil {
 		glog.Exit(err)
 	}
 

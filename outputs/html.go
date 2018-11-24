@@ -57,7 +57,6 @@ func (t *HTMLOutput) DisplayCommits(data []byte) error {
 	if err = t.parseFile(base, file, raw); err != nil {
 		return err
 	}
-
 	return t.openUrl(fileName)
 }
 
