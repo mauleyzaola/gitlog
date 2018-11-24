@@ -9,15 +9,20 @@ import (
 )
 
 func main() {
-	config := &config{
+	config := &Config{
 		Directories: ".",
 		Type:        "commits",
 		Format:      "html",
+		Authors:     "",
 	}
 
 	flag.StringVar(&config.Directories, "directories", config.Directories, "the path(s) to the the git repository")
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
 	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
+	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
+	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
+	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
+
 	flag.Parse()
 
 	var (
@@ -25,7 +30,7 @@ func main() {
 		result   interface{}
 		results  []interface{}
 		outputFn func([]byte) error
-		typeFn   func(name string, commits interface{}) (interface{}, error)
+		typeFn   func(name string, params *Config, commits interface{}) (interface{}, error)
 		data     []byte
 		err      error
 	)
@@ -62,7 +67,7 @@ func main() {
 		if err != nil {
 			glog.Exit(err)
 		}
-		result, err = typeFn(repoName, gitResult)
+		result, err = typeFn(repoName, config, gitResult)
 		if err != nil {
 			glog.Exit(err)
 		}
