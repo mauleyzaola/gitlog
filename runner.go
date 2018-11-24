@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -25,4 +26,27 @@ func runGitLog(directory string) (io.Reader, error) {
 		return nil, err
 	}
 	return stdOut, nil
+}
+
+func repoNameFromPath(p string) (string, error) {
+	if p == "." {
+		dir, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Base(dir), nil
+	}
+	return filepath.Base(p), nil
+}
+
+func parseDirNames(dirs string) ([]string, error) {
+	var res []string
+	for _, dir := range strings.Fields(dirs) {
+		values, err := filepath.Glob(dir)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, values...)
+	}
+	return res, nil
 }

@@ -23,17 +23,19 @@ CommitDate: 2018-08-26T01:04:55-05:00
 
 1	1	src/frontend/app/catalog/formula.controllers.js
 `
+	repoName := "unit-tests"
 	buffer := bytes.NewBufferString(source)
-	res, err := ParseCommitLines(buffer)
+	res, err := ParseCommitLines(repoName, buffer)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	results, ok := res.([]*Commit)
+	outcome, ok := res.(*RepoCommitCollection)
 	if !ok {
-		t.Errorf("cannot cast to []*Commit:%#v", res)
+		t.Errorf("cannot cast to *RepoCommitCollection:%#v", res)
 		return
 	}
+	results := outcome.Commits
 	if expected, actual := 1, len(results); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 		return
@@ -99,17 +101,18 @@ CommitDate: 2018-08-28T18:01:18-05:00
 
 `
 	buffer := bytes.NewBufferString(source)
-	res, err := ParseCommitLines(buffer)
+	repoName := "unit-tests"
+	res, err := ParseCommitLines(repoName, buffer)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	results, ok := res.([]*Commit)
+	outcome, ok := res.(*RepoCommitCollection)
 	if !ok {
-		t.Errorf("cannot cast to []*Commit:%#v", res)
+		t.Errorf("cannot cast to *RepoCommitCollection:%#v", res)
 		return
 	}
-
+	results := outcome.Commits
 	samples := []Commit{
 		{
 			Date:    time.Date(2018, 8, 28, 18, 1, 18, 0, time.UTC).Add(time.Hour * 5),

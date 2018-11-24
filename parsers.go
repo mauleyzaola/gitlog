@@ -12,15 +12,16 @@ import (
 
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
-func ParseCommitLines(r interface{}) (interface{}, error) {
+func ParseCommitLines(name string, r interface{}) (interface{}, error) {
 	reader, ok := r.(io.Reader)
 	if !ok {
 		return nil, fmt.Errorf("cannot cast to io.Reader:%#v", r)
 	}
 	scanner := bufio.NewScanner(reader)
 	var (
-		result []*Commit
-		curr   *Commit
+		commits          []*Commit
+		curr             *Commit
+		minDate, maxDate time.Time
 	)
 	hashes := make(map[string]struct{})
 	for scanner.Scan() {
@@ -39,15 +40,26 @@ func ParseCommitLines(r interface{}) (interface{}, error) {
 				// new commit detected
 				curr = &Commit{Hash: hash}
 				hashes[hash] = struct{}{}
-				result = append(result, curr)
+				commits = append(commits, curr)
 			}
 		}
 		ParseLine(curr, line)
+		if minDate.IsZero() || curr.Date.Before(minDate) {
+			minDate = curr.Date
+		}
+		if maxDate.Before(curr.Date) {
+			maxDate = curr.Date
+		}
 	}
-	tmp := Commits(result)
+	tmp := Commits(commits)
 	sort.Sort(tmp)
 
-	return result, nil
+	return &RepoCommitCollection{
+		Name:    name,
+		Commits: commits,
+		MinDate: minDate.Unix(),
+		MaxDate: maxDate.Unix(),
+	}, nil
 }
 
 func findHash(fields []string) string {

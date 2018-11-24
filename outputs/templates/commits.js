@@ -1,69 +1,94 @@
-// data must be an array of gitlog commits
-function transform(data){
-    data = JSON.parse(data);
+function dateToDay(row){
+    var date = new Date(row);
+    var year = date.getUTCFullYear().toString();
+    var month = (date.getUTCMonth() + 1).toString();
+    var day = (date.getDate()).toString();
+    month = ((month.length === 1) ? '0' : '') + month;
+    // day = ((day.length === 1) ? '0' : '') + day;
+    day = '01';
+    return year + month + day;
+}
+
+function dayToDate(val){
+    var year = val.toString().substr(0,4);
+    var month = val.toString().substr(4,2);
+    var day = val.toString().substr(6,2);
+    return new Date(Date.parse(month + '/' + '/' + day + '/' + year));
+}
+
+
+function transformCollection(commits){
     var accum = {};
-
-    var monthKey = function(row){
-        var date = new Date(row);
-        var year = date.getUTCFullYear().toString();
-        var month = (date.getUTCMonth() + 1).toString();
-        if(month.length === 1){
-            month = "0" + month;
-        }
-        return year + "-" + month;
-    }
-
-    data.forEach(function(x) {
-        var m = monthKey(x.date);
-        var curr = accum[m] || 0;
-        accum[m] = ++curr;
+    commits.forEach(function(x) {
+        var key = dateToDay(x.date);
+        var curr = accum[key] || 0;
+        accum[key] = ++curr;
     });
 
-    var categories = [];
     var series = [];
 
     for(var key in accum){
-        categories.push(key);
-        series.push(accum[key]);
+        series.push({
+            key,
+            value: accum[key],
+        });
     }
 
+    return series;
+}
+
+
+function transform(data){
+    data = JSON.parse(data);
+    var series = [];
+    data.forEach(function(s) {
+        var res = transformCollection(s.commits).map(function(i){
+            return Object.assign({}, {
+                x: (moment(dayToDate(i.key)).unix()) * 1000,
+                y: i.value,
+            });
+        })
+        series.push({
+            name: s.name,
+            data: res,
+        });
+    });
     return {
-        categories:categories,
-        series:series,
-    }
+        series,
+    };
 }
 
 function draw(data){
     Highcharts.chart('container', {
+        credits: false,
         chart: {
-            type: 'line'
+            type: 'spline'
         },
         title: {
-            text: 'Commits Summary'
+            text: 'Commits by Year/Month'
         },
         subtitle: {
-            text: '.'
+            text: 'Aggregate sum for each repository'
         },
         xAxis: {
-            categories: data.categories,
+            type: 'datetime',
+            title: {
+                text: '',
+            },
         },
         yAxis: {
             title: {
                 text: 'Number of Commits'
-            }
+            },
         },
         plotOptions: {
-            line: {
-                dataLabels: {
+            spline: {
+                marker: {
                     enabled: true
-                },
-                enableMouseTracking: false
-            }
+                }
+            },
         },
-        series: [{
-            name: 'Everyone',
-            data: data.series,
-        }, ]
+        series: data.series,
     });
 }
 

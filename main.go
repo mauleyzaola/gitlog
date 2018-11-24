@@ -10,12 +10,12 @@ import (
 
 func main() {
 	config := &config{
-		Directory: ".",
-		Type:      "commits",
-		Format:    "html",
+		Directories: ".",
+		Type:        "commits",
+		Format:      "html",
 	}
 
-	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the git repository")
+	flag.StringVar(&config.Directories, "directories", config.Directories, "the path(s) to the the git repository")
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
 	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
 	flag.Parse()
@@ -23,8 +23,11 @@ func main() {
 	var (
 		output   outputs.Output
 		result   interface{}
+		results  []interface{}
 		outputFn func([]byte) error
-		typeFn   func(interface{}) (interface{}, error)
+		typeFn   func(name string, commits interface{}) (interface{}, error)
+		data     []byte
+		err      error
 	)
 
 	switch config.Format {
@@ -44,18 +47,29 @@ func main() {
 		glog.Exit("unsupported output:", config.Type)
 	}
 
-	gitResult, err := runGitLog(config.Directory)
+	repos, err := parseDirNames(config.Directories)
 	if err != nil {
-		glog.Exit(err)
+		glog.Exitln(err)
 	}
+	for _, repo := range repos {
+		gitResult, err := runGitLog(repo)
+		if err != nil {
+			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, err)
+			continue
+		}
 
-	result, err = typeFn(gitResult)
-	if err != nil {
-		glog.Exit(err)
+		repoName, err := repoNameFromPath(repo)
+		if err != nil {
+			glog.Exit(err)
+		}
+		result, err = typeFn(repoName, gitResult)
+		if err != nil {
+			glog.Exit(err)
+		}
+
+		results = append(results, result)
 	}
-
-	data, err := json.Marshal(&result)
-	if err != nil {
+	if data, err = json.Marshal(&results); err != nil {
 		glog.Exit(err)
 	}
 
