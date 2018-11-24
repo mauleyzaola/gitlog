@@ -1,9 +1,9 @@
 package main
 
 type config struct {
-	Directory string
-	Type      string
-	Format    string
+	Directories string
+	Type        string
+	Format      string
 }
 
 type RepoCommitCollection struct {

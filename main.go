@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"strings"
 
 	"github.com/golang/glog"
 	"github.com/mauleyzaola/gitlog/outputs"
@@ -11,12 +10,12 @@ import (
 
 func main() {
 	config := &config{
-		Directory: ".",
-		Type:      "commits",
-		Format:    "html",
+		Directories: ".",
+		Type:        "commits",
+		Format:      "html",
 	}
 
-	flag.StringVar(&config.Directory, "directory", config.Directory, "the path to the the git repository")
+	flag.StringVar(&config.Directories, "directories", config.Directories, "the path(s) to the the git repository")
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
 	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
 	flag.Parse()
@@ -40,18 +39,23 @@ func main() {
 		glog.Exit("unsupported format:", config.Format)
 	}
 
-	for _, repo := range strings.Fields(config.Directory) {
-		switch config.Type {
-		case "commits":
-			typeFn = ParseCommitLines
-			outputFn = output.DisplayCommits
-		default:
-			glog.Exit("unsupported output:", config.Type)
-		}
+	switch config.Type {
+	case "commits":
+		typeFn = ParseCommitLines
+		outputFn = output.DisplayCommits
+	default:
+		glog.Exit("unsupported output:", config.Type)
+	}
 
+	repos, err := parseDirNames(config.Directories)
+	if err != nil {
+		glog.Exitln(err)
+	}
+	for _, repo := range repos {
 		gitResult, err := runGitLog(repo)
 		if err != nil {
-			glog.Exit(err)
+			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, err)
+			continue
 		}
 
 		repoName, err := repoNameFromPath(repo)

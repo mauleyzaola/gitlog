@@ -38,3 +38,15 @@ func repoNameFromPath(p string) (string, error) {
 	}
 	return filepath.Base(p), nil
 }
+
+func parseDirNames(dirs string) ([]string, error) {
+	var res []string
+	for _, dir := range strings.Fields(dirs) {
+		values, err := filepath.Glob(dir)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, values...)
+	}
+	return res, nil
+}
