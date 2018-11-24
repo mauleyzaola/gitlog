@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gobuffalo/packr/v2"
@@ -35,7 +36,17 @@ func (t *HTMLOutput) DisplayCommits(data []byte) error {
 	}
 
 	if err = ioutil.WriteFile(filepath.Join(dir, "charts.js"), commits, 0666); err != nil {
-		glog.Exit(err)
+		return err
+	}
+
+	// copy external libraries
+	if err = box.Walk(func(name string, file packr.File) error {
+		if strings.HasPrefix(name, "lib/") {
+			return ioutil.WriteFile(filepath.Join(dir, name), []byte(file.String()), 0600)
+		}
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	fileName := filepath.Join(dir, "index.html")
@@ -43,6 +54,13 @@ func (t *HTMLOutput) DisplayCommits(data []byte) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err = file.Close(); err != nil {
+			glog.Error(err)
+		}
+	}()
+
 	raw := &struct {
 		Raw string
 	}{
@@ -63,7 +81,7 @@ func (t *HTMLOutput) DisplayCommits(data []byte) error {
 func (t *HTMLOutput) createDir() (string, error) {
 	ts := time.Now().Format("20060102150403")
 	dir := filepath.Join(os.TempDir(), ts)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "lib"), 0755); err != nil {
 		return "", err
 	}
 	return dir, nil

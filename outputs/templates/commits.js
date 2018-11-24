@@ -60,6 +60,7 @@ function transform(data){
 
 function draw(data){
     Highcharts.chart('container', {
+        credits: false,
         chart: {
             type: 'spline'
         },
@@ -71,6 +72,9 @@ function draw(data){
         },
         xAxis: {
             type: 'datetime',
+            title: {
+                text: '',
+            },
         },
         yAxis: {
             title: {
