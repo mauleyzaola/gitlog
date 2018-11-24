@@ -24,7 +24,7 @@ func main() {
 		output   outputs.Output
 		result   interface{}
 		outputFn func([]byte) error
-		typeFn   func(interface{}) (interface{}, error)
+		typeFn   func(name string, commits interface{}) (interface{}, error)
 	)
 
 	switch config.Format {
@@ -49,7 +49,11 @@ func main() {
 		glog.Exit(err)
 	}
 
-	result, err = typeFn(gitResult)
+	repoName, err := repoNameFromPath(config.Directory)
+	if err != nil {
+		glog.Exit(err)
+	}
+	result, err = typeFn(repoName, gitResult)
 	if err != nil {
 		glog.Exit(err)
 	}
