@@ -54,7 +54,7 @@ func main() {
 			glog.Exit(err)
 		}
 
-		repoName, err := repoNameFromPath(config.Directory)
+		repoName, err := repoNameFromPath(repo)
 		if err != nil {
 			glog.Exit(err)
 		}

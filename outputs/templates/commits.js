@@ -4,8 +4,9 @@ function dateToDay(row){
     var month = (date.getUTCMonth() + 1).toString();
     var day = (date.getDate()).toString();
     month = ((month.length === 1) ? '0' : '') + month;
-    day = ((day.length === 1) ? '0' : '') + day;
-    return year + month;
+    // day = ((day.length === 1) ? '0' : '') + day;
+    day = '01';
+    return year + month + day;
 }
 
 function dayToDate(val){
@@ -41,8 +42,11 @@ function transform(data){
     data = JSON.parse(data);
     var series = [];
     data.forEach(function(s) {
-        var res = transformCollection(s.commits).map(function(x){
-            return [parseInt(x.key), x.value];
+        var res = transformCollection(s.commits).map(function(i){
+            return Object.assign({}, {
+                x: (moment(dayToDate(i.key)).unix()) * 1000,
+                y: i.value,
+            });
         })
         series.push({
             name: s.name,
@@ -66,27 +70,19 @@ function draw(data){
             text: 'Aggregate sum for each repository'
         },
         xAxis: {
-            type: 'linear',
-            tickInterval: 1,
-            title: {
-                text: 'YYYYMM'
-            },
-            labels: {
-                format: '{value}'
-            },
+            type: 'datetime',
         },
         yAxis: {
             title: {
                 text: 'Number of Commits'
             },
-            min: 0
         },
         plotOptions: {
             spline: {
                 marker: {
                     enabled: true
                 }
-            }
+            },
         },
         series: data.series,
     });
