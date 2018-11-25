@@ -17,7 +17,7 @@ function dayToDate(val){
 }
 
 
-function transformCollection(commits){
+function groupCommitsByMonth(commits){
     var accum = {};
     commits.forEach(function(x) {
         var key = dateToDay(x.date);
@@ -38,37 +38,63 @@ function transformCollection(commits){
 }
 
 
-function transform(data){
-    data = JSON.parse(data);
+function calcCommitPerMonthAccum(data){
     var series = [];
     data.forEach(function(s) {
-        var res = transformCollection(s.commits).map(function(i){
+        var res = groupCommitsByMonth(s.commits).map(function(i){
             return Object.assign({}, {
                 x: (moment(dayToDate(i.key)).unix()) * 1000,
                 y: i.value,
             });
         })
-        series.push({
-            name: s.name,
-            data: res,
-        });
+        var sum = 0;
+        series.push(
+            {
+                name: s.name,
+                data: res.map(function(i){
+                    sum += i.y;
+                    return {
+                        x: i.x,
+                        y: sum,
+                    }
+                }),
+            },
+        );
     });
-    return {
-        series,
-    };
+    return series;
 }
 
-function draw(data){
-    Highcharts.chart('container', {
+
+function calcCommitPerMonth(data){
+    var series = [];
+    data.forEach(function(s) {
+        var res = groupCommitsByMonth(s.commits).map(function(i){
+            return Object.assign({}, {
+                x: (moment(dayToDate(i.key)).unix()) * 1000,
+                y: i.value,
+            });
+        })
+        series.push(
+            {
+                name: s.name,
+                data: res,
+            },
+        );
+    });
+    return series;
+}
+
+function drawCommitsYearMonthTimeline(params){
+    Highcharts.chart(params.element, {
         credits: false,
         chart: {
             type: 'spline'
         },
         title: {
-            text: 'Commits by Year/Month'
+            text: params.title,
         },
         subtitle: {
-            text: 'Aggregate sum for each repository'
+            text: params.subtitle,
         },
         xAxis: {
             type: 'datetime',
@@ -88,9 +114,23 @@ function draw(data){
                 }
             },
         },
-        series: data.series,
+        series: params.series,
     });
 }
 
 var raw = document.getElementById('raw');
-draw(transform(raw.innerHTML));
+var data = JSON.parse(raw.innerHTML);
+
+drawCommitsYearMonthTimeline({
+    series: calcCommitPerMonth(data),
+    title: 'Commits by Year/Month',
+    subtitle: 'for each repository',
+    element: 'container-monthly-commits',
+});
+
+drawCommitsYearMonthTimeline({
+    series: calcCommitPerMonthAccum(data),
+    title: 'Commits by Year/Month',
+    subtitle: 'Aggregate sum for each repository',
+    element: 'container-monthly-commits-accum',
+});
