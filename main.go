@@ -13,6 +13,7 @@ func main() {
 		Type:    "commits",
 		Format:  "html",
 		Authors: "",
+		Output:  "",
 	}
 
 	flag.StringVar(&config.Dirs, "dirs", config.Dirs, "the path(s) to the the git repository")
@@ -21,6 +22,7 @@ func main() {
 	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
 	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
 	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
+	flag.StringVar(&config.Output, "output", config.Output, "path to zip file for storing results")
 
 	flag.Parse()
 
@@ -28,7 +30,7 @@ func main() {
 		output   outputs.Output
 		result   interface{}
 		results  []interface{}
-		outputFn func(interface{}) error
+		outputFn func(*outputs.FileGenerator, interface{}) error
 		typeFn   func(name string, params *Config, commits interface{}) (interface{}, error)
 		err      error
 	)
@@ -48,6 +50,11 @@ func main() {
 		outputFn = output.DisplayCommits
 	default:
 		glog.Exit("unsupported output:", config.Type)
+	}
+
+	fg, err := outputs.NewFileGenerator()
+	if err != nil {
+		glog.Exitln(err)
 	}
 
 	repos, err := parseDirNames(config.Dirs)
@@ -73,7 +80,7 @@ func main() {
 		results = append(results, result)
 	}
 
-	if err = outputFn(results); err != nil {
+	if err = outputFn(fg, results); err != nil {
 		glog.Exit(err)
 	}
 }
