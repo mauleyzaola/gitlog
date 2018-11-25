@@ -35,10 +35,6 @@ func (t Commits) Filter(authors []string, from, to *time.Time) Commits {
 			res = append(res, v)
 			continue
 		}
-		if _, ok := mAuth[strings.ToLower(v.Author.Name)]; ok {
-			res = append(res, v)
-			continue
-		}
 		if _, ok := mAuth[strings.ToLower(v.Author.Email)]; ok {
 			res = append(res, v)
 			continue

@@ -76,10 +76,10 @@ gitlog -format="json" | jq .
 
 We can filter the commits by `author(s)` and by `date` range. Filters work as `AND` operators, so the more filters you add, the less results you will get in return
 
-If we would want to filter by `author(s)` we can type in as many as needed, comma separated using the parameter `-authors` like this. We can use either `name` or `email` values, it makes no difference.
+If we would want to filter by `author(s)` we can type in as many as needed, comma separated using the parameter `-authors` like this. Authors are identified by an exact match on the email.
 
 ```
-gitlog -authors="tonyb gusdevel john@mail.com"
+gitlog -authors="gusdevel@outlook.com susan@mail.com"
 ```
 
 ### Date Range (from,to)

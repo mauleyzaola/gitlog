@@ -1,8 +1,8 @@
 package outputs
 
 import (
+	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"os"
@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/gobuffalo/packr/v2"
@@ -22,7 +23,12 @@ func NewHTMLOutput() *HTMLOutput {
 	return &HTMLOutput{}
 }
 
-func (t *HTMLOutput) DisplayCommits(data []byte) error {
+func (t *HTMLOutput) DisplayCommits(v interface{}) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
 	// create output directory
 	dir, err := t.createDir()
 	if err != nil {

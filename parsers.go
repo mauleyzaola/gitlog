@@ -81,6 +81,10 @@ func ParseCommitLines(name string, config *Config, r interface{}) (interface{}, 
 
 	sort.Sort(tmp)
 
+	if len(tmp) == 0 {
+		tmp = []*Commit{}
+	}
+
 	return &RepoCommitCollection{
 		Name:    name,
 		Commits: tmp,

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 
 	"github.com/golang/glog"
@@ -29,9 +28,8 @@ func main() {
 		output   outputs.Output
 		result   interface{}
 		results  []interface{}
-		outputFn func([]byte) error
+		outputFn func(interface{}) error
 		typeFn   func(name string, params *Config, commits interface{}) (interface{}, error)
-		data     []byte
 		err      error
 	)
 
@@ -74,11 +72,8 @@ func main() {
 
 		results = append(results, result)
 	}
-	if data, err = json.Marshal(&results); err != nil {
-		glog.Exit(err)
-	}
 
-	if err = outputFn(data); err != nil {
+	if err = outputFn(results); err != nil {
 		glog.Exit(err)
 	}
 }

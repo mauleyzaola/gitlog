@@ -47,10 +47,10 @@ func TestCommits_Filter(t *testing.T) {
 		},
 	}
 
-	if expected, actual := 4, len(input.Filter(strings.Fields("John"), nil, nil)); expected != actual {
+	if expected, actual := 4, len(input.Filter(strings.Fields("john.foo@mail.com"), nil, nil)); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
-	if expected, actual := 6, len(input.Filter(strings.Fields("John mary"), nil, nil)); expected != actual {
+	if expected, actual := 6, len(input.Filter(strings.Fields("john.foo@mail.com mary.bar@mail.com"), nil, nil)); expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
 	if expected, actual := 0, len(input.Filter(nil, &apr2018, nil)); expected != actual {
