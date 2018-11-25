@@ -36,17 +36,17 @@ Result is a JSON array of repository objects. Each one contains its name and an 
 [{"name":"gitlog","commits":[{"hash":"0029751209fe88abe4080f241bd77fee5d0c16bd","author":{"name":"Mauricio Leyzaola","email":"mauricio.leyzaola@gmail.com"},"date":"2018-09-01T21:40:03-05:00","added":52,"removed":0},...
 ```
 
-The `-directories` parameter allows to process more than one git repository. You can pass any number of repositories. When using `html` format it might not be a good idea abuse this feature.
+The `-dirs` parameter allows to process more than one git repository. You can pass any number of repositories. When using `html` format it might not be a good idea abuse this feature.
 
 Path to repositories are local directories, and can be either absolute or relative. Directories must be separated by spaces like this.
 ```
-gitlog -directories=". ../glog $GOPATH/src/github.com/mauleyzaola/challenge"
+gitlog -dirs=". ../glog $GOPATH/src/github.com/mauleyzaola/challenge"
 ```
 
 Wildcards are also supported and `gitlog` will try to get as much information as possible. If for any reason it cannot accomplish the data retrieval, it will notify on stderr and continue working on the other directories.
 
 ```
-gitlog -directories="../tak* . ../challenge"
+gitlog -dirs="../tak* . ../challenge"
 ```
 
 The result goes to stdout, so it can be used as stdin another program using pipes. For instance `jq` to pretty format the result.
