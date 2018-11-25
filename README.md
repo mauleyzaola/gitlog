@@ -25,7 +25,9 @@ This is the default format and will execute from current working directory if no
 ```bash
 gitlog
 ```
-![alt tag](assets/gitui-output-sample.png)
+![alt tag](assets/commits-timeline-sample.png)
+![alt tag](assets/commits-timeline-accum-sample.png)
+![alt tag](assets/pie-authors-sample.png)
 
 ### JSON Format
 ```
