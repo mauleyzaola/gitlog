@@ -16,9 +16,9 @@ go get -v github.com/mauleyzaola/gitlog
 packr2 install && packr2 clean
 ```
 
-## Examples
+## Formats
 
-### HTML Output
+### HTML Format
 
 This is the default format and will execute from current working directory if no parameters are specified.
 
@@ -27,7 +27,7 @@ gitlog
 ```
 ![alt tag](assets/gitui-output-sample.png)
 
-### JSON Output
+### JSON Format
 ```
 gitlog -format="json"
 ```
@@ -51,7 +51,7 @@ gitlog -directories="../tak* . ../challenge"
 
 The result goes to stdout, so it can be used as stdin another program using pipes. For instance `jq` to pretty format the result.
 ```bash
-gitlog -format json | jq .
+gitlog -format="json" | jq .
 [
   {
     "name": "gitlog",
@@ -68,4 +68,26 @@ gitlog -format json | jq .
       },
       ...
 
+```
+
+## Filters
+
+### Authors
+
+We can filter the commits by `author(s)` and by `date` range. Filters work as `AND` operators, so the more filters you add, the less results you will get in return
+
+If we would want to filter by `author(s)` we can type in as many as needed, comma separated using the parameter `-authors` like this. Authors are identified by an exact match on the email.
+
+```
+gitlog -authors="gusdevel@outlook.com susan@mail.com"
+```
+
+### Date Range (from,to)
+
+We can also restrict the commits by using a date range or just one date. The date format is `YYYYMMDD` and internaly gitlog will convert to the latest second of the day in UTC time.
+
+```
+gitlog -from="20180522"
+gitlog -from="20180522" -to="20181031"
+gitlog -to="20180101"
 ```

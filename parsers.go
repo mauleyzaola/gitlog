@@ -12,17 +12,29 @@ import (
 
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
-func ParseCommitLines(name string, r interface{}) (interface{}, error) {
+func ParseCommitLines(name string, config *Config, r interface{}) (interface{}, error) {
 	reader, ok := r.(io.Reader)
 	if !ok {
 		return nil, fmt.Errorf("cannot cast to io.Reader:%#v", r)
 	}
+
 	scanner := bufio.NewScanner(reader)
 	var (
 		commits          []*Commit
 		curr             *Commit
 		minDate, maxDate time.Time
+		from, to         *time.Time
 	)
+
+	from, err := parseDate(config.From)
+	if err != nil {
+		return nil, err
+	}
+	to, err = parseDate(config.To)
+	if err != nil {
+		return nil, err
+	}
+
 	hashes := make(map[string]struct{})
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -51,12 +63,31 @@ func ParseCommitLines(name string, r interface{}) (interface{}, error) {
 			maxDate = curr.Date
 		}
 	}
+
+	// cast to type
 	tmp := Commits(commits)
+
+	// apply filters
+	if len(config.Authors) != 0 {
+		tmp = tmp.Filter(strings.Fields(config.Authors), nil, nil)
+	}
+
+	if from != nil {
+		tmp = tmp.Filter(nil, from, nil)
+	}
+	if to != nil {
+		tmp = tmp.Filter(nil, nil, to)
+	}
+
 	sort.Sort(tmp)
+
+	if len(tmp) == 0 {
+		tmp = []*Commit{}
+	}
 
 	return &RepoCommitCollection{
 		Name:    name,
-		Commits: commits,
+		Commits: tmp,
 		MinDate: minDate.Unix(),
 		MaxDate: maxDate.Unix(),
 	}, nil
@@ -137,4 +168,16 @@ func numStat(line string) (ok bool, added, deleted int64) {
 	}
 	ok = true
 	return
+}
+
+func parseDate(val string) (*time.Time, error) {
+	if len(val) == 0 {
+		return nil, nil
+	}
+	date, err := time.Parse("20060102", val)
+	if err != nil {
+		return nil, err
+	}
+	date = date.Add(time.Hour * 24).Add(-time.Second)
+	return &date, nil
 }

@@ -25,7 +25,7 @@ CommitDate: 2018-08-26T01:04:55-05:00
 `
 	repoName := "unit-tests"
 	buffer := bytes.NewBufferString(source)
-	res, err := ParseCommitLines(repoName, buffer)
+	res, err := ParseCommitLines(repoName, &Config{}, buffer)
 	if err != nil {
 		t.Error(err)
 		return
@@ -102,7 +102,7 @@ CommitDate: 2018-08-28T18:01:18-05:00
 `
 	buffer := bytes.NewBufferString(source)
 	repoName := "unit-tests"
-	res, err := ParseCommitLines(repoName, buffer)
+	res, err := ParseCommitLines(repoName, &Config{}, buffer)
 	if err != nil {
 		t.Error(err)
 		return
@@ -286,6 +286,61 @@ func Test_IsNumStat(t *testing.T) {
 		}
 		if expected, actual := v.deleted, deleted; expected != actual {
 			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
+		}
+	}
+}
+
+func TestParseDate(t *testing.T) {
+	d1 := time.Date(2018, 11, 25, 23, 59, 59, 0, time.UTC)
+	d2 := time.Date(2018, 3, 4, 23, 59, 59, 0, time.UTC)
+	cases := []struct {
+		input    string
+		expected *time.Time
+		error    bool
+	}{
+		{
+			input:    "",
+			expected: nil,
+			error:    false,
+		},
+		{
+			input:    "20181125",
+			expected: &d1,
+			error:    false,
+		},
+		{
+			input:    "20180304",
+			expected: &d2,
+			error:    false,
+		},
+		{
+			input:    "20180304103015",
+			expected: nil,
+			error:    true,
+		},
+		{
+			input:    "x",
+			expected: nil,
+			error:    true,
+		},
+	}
+
+	for i, c := range cases {
+		actual, err := parseDate(c.input)
+		if c.error {
+			if err == nil {
+				t.Errorf("[%d] - expected: error actual: nil", i)
+			}
+		} else {
+			if err != nil {
+				t.Errorf("[%d] - expected: nil actual: %s", i, err)
+			} else if c.expected == nil || actual == nil {
+				if c.expected != actual {
+					t.Errorf("[%d] - expected:%v actual:%v", i, c.expected, actual)
+				}
+			} else if c.expected.Unix() != actual.Unix() {
+				t.Errorf("[%d] - expected:%v actual:%v", i, c.expected, actual)
+			}
 		}
 	}
 }
