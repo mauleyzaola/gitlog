@@ -19,7 +19,7 @@ function dayToDate(val){
 
 function groupCommitsByMonth(commits){
     var accum = {};
-    commits.forEach(function(x) {
+    (commits || []).forEach(function(x) {
         var key = dateToDay(x.date);
         var curr = accum[key] || 0;
         accum[key] = ++curr;
@@ -41,7 +41,7 @@ function groupCommitsByMonth(commits){
 function calcCommitPerMonthAccum(data){
     var series = [];
     data.forEach(function(s) {
-        var res = groupCommitsByMonth(s.commits).map(function(i){
+        var res = groupCommitsByMonth(s.commits || []).map(function(i){
             return Object.assign({}, {
                 x: (moment(dayToDate(i.key)).unix()) * 1000,
                 y: i.value,
@@ -68,7 +68,7 @@ function calcCommitPerMonthAccum(data){
 function calcCommitPerMonth(data){
     var series = [];
     data.forEach(function(s) {
-        var res = groupCommitsByMonth(s.commits).map(function(i){
+        var res = groupCommitsByMonth(s.commits || []).map(function(i){
             return Object.assign({}, {
                 x: (moment(dayToDate(i.key)).unix()) * 1000,
                 y: i.value,
@@ -82,6 +82,33 @@ function calcCommitPerMonth(data){
         );
     });
     return series;
+}
+
+function calcAuthorDistributionSummary(data){
+    // TODO: implement others when there are too many authors
+    var res = [];
+    var authors = {};
+    data.forEach(function(r){
+        (r.commits || []).forEach(function(c){
+            var author = authors[c.author.email];
+            if(!author){
+                author = { count: 0};
+                authors[c.author.email] = author;
+            }
+            author.count++;
+        })
+    })
+    
+    for(var key in authors){
+        res.push({
+            name: key, // TODO: split @
+            y: authors[key].count,
+        })
+    }
+    res.sort(function(a,b){
+        return (a.y < b.y) ? 1 : -1;
+    })
+    return res;
 }
 
 function drawCommitsYearMonthTimeline(params){
@@ -118,6 +145,45 @@ function drawCommitsYearMonthTimeline(params){
     });
 }
 
+function drawAuthorSummary(params){
+    Highcharts.chart(params.element, {
+        credits: false,
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        title: {
+            text: params.title
+        },
+        subtitle: {
+            text: params.subtitle,
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    style: {
+                        color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                    }
+                }
+            }
+        },
+        series: [{
+            name: 'Commits',
+            colorByPoint: true,
+            data: params.data,
+        }]
+    });
+}
+
 var raw = document.getElementById('raw');
 var data = JSON.parse(raw.innerHTML);
 
@@ -133,4 +199,11 @@ drawCommitsYearMonthTimeline({
     title: 'Commits by Year/Month',
     subtitle: 'Aggregate sum for each repository',
     element: 'container-monthly-commits-accum',
+});
+
+drawAuthorSummary({
+    element: 'container-author-distribution',
+    title: 'Distribution of Authors',
+    subtitle: 'by counting the number of commits in all repositories',
+    data: calcAuthorDistributionSummary(data),
 });

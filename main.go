@@ -9,13 +9,13 @@ import (
 
 func main() {
 	config := &Config{
-		Directories: ".",
-		Type:        "commits",
-		Format:      "html",
-		Authors:     "",
+		Dirs:    ".",
+		Type:    "commits",
+		Format:  "html",
+		Authors: "",
 	}
 
-	flag.StringVar(&config.Directories, "directories", config.Directories, "the path(s) to the the git repository")
+	flag.StringVar(&config.Dirs, "dirs", config.Dirs, "the path(s) to the the git repository")
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
 	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
 	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
@@ -50,7 +50,7 @@ func main() {
 		glog.Exit("unsupported output:", config.Type)
 	}
 
-	repos, err := parseDirNames(config.Directories)
+	repos, err := parseDirNames(config.Dirs)
 	if err != nil {
 		glog.Exitln(err)
 	}
