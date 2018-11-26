@@ -93,3 +93,11 @@ gitlog -from="20180522"
 gitlog -from="20180522" -to="20181031"
 gitlog -to="20180101"
 ```
+
+## Output
+
+Passing a value to `-output` parameter Gitlog can compress the results into a zip file for easy distributing results.
+
+```
+gitlog -output="/Users/mau/Downloads/results.zip"
+```
