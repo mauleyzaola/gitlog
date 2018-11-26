@@ -22,7 +22,7 @@ func main() {
 	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
 	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
 	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
-	flag.StringVar(&config.Output, "output", config.Output, "path to zip file for storing results")
+	flag.StringVar(&config.Output, "output", config.Output, "path to file for storing results")
 
 	flag.Parse()
 
@@ -35,12 +35,17 @@ func main() {
 		err      error
 	)
 
-	switch config.Format {
-	case "json":
+	if config.Format == "json" {
 		output = outputs.NewJsonOutput()
-	case "html":
-		output = outputs.NewHTMLOutput()
-	default:
+	} else if config.Format == "html" {
+		if len(config.Output) == 0 {
+			output = outputs.NewHTMLOutput()
+		} else {
+			if output, err = outputs.NewZipOutput(config.Output); err != nil {
+				glog.Exitln(err)
+			}
+		}
+	} else {
 		glog.Exit("unsupported format:", config.Format)
 	}
 
