@@ -12,10 +12,11 @@ import (
 
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
-func ParseCommitLines(name string, config *Config, r interface{}) (interface{}, error) {
+// Returns true on first return parameter if there was data available
+func ParseCommitLines(name string, config *Config, r interface{}) (bool, interface{}, error) {
 	reader, ok := r.(io.Reader)
 	if !ok {
-		return nil, fmt.Errorf("cannot cast to io.Reader:%#v", r)
+		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", r)
 	}
 
 	scanner := bufio.NewScanner(reader)
@@ -28,11 +29,11 @@ func ParseCommitLines(name string, config *Config, r interface{}) (interface{}, 
 
 	from, err := parseDate(config.From)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 	to, err = parseDate(config.To)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 
 	hashes := make(map[string]struct{})
@@ -45,7 +46,7 @@ func ParseCommitLines(name string, config *Config, r interface{}) (interface{}, 
 		}
 		hash := findHash(fields)
 		if len(hash) == 0 && curr == nil {
-			return nil, fmt.Errorf("wrong git structure")
+			return false, nil, fmt.Errorf("wrong git structure")
 		}
 		if len(hash) != 0 {
 			if _, ok = hashes[hash]; !ok {
@@ -85,7 +86,7 @@ func ParseCommitLines(name string, config *Config, r interface{}) (interface{}, 
 		tmp = []*Commit{}
 	}
 
-	return &RepoCommitCollection{
+	return len(tmp) != 0, &RepoCommitCollection{
 		Name:    name,
 		Commits: tmp,
 		MinDate: minDate.Unix(),

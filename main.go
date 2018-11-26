@@ -9,11 +9,12 @@ import (
 
 func main() {
 	config := &Config{
-		Dirs:    ".",
-		Type:    "commits",
-		Format:  "html",
-		Authors: "",
-		Output:  "",
+		Dirs:      ".",
+		Type:      "commits",
+		Format:    "html",
+		Authors:   "",
+		Output:    "",
+		SkipEmpty: true,
 	}
 
 	flag.StringVar(&config.Dirs, "dirs", config.Dirs, "the path(s) to the the git repository")
@@ -23,6 +24,7 @@ func main() {
 	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
 	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
 	flag.StringVar(&config.Output, "output", config.Output, "path to file for storing results")
+	flag.BoolVar(&config.SkipEmpty, "skip-empty", config.SkipEmpty, "skip repositories with empty data sets")
 
 	flag.Parse()
 
@@ -31,8 +33,9 @@ func main() {
 		result   interface{}
 		results  []interface{}
 		outputFn func(*outputs.FileGenerator, interface{}) error
-		typeFn   func(name string, params *Config, commits interface{}) (interface{}, error)
+		typeFn   func(name string, params *Config, commits interface{}) (bool, interface{}, error)
 		err      error
+		ok       bool
 	)
 
 	if config.Format == "json" {
@@ -77,12 +80,14 @@ func main() {
 		if err != nil {
 			glog.Exit(err)
 		}
-		result, err = typeFn(repoName, config, gitResult)
+		ok, result, err = typeFn(repoName, config, gitResult)
 		if err != nil {
 			glog.Exit(err)
 		}
 
-		results = append(results, result)
+		if ok || !config.SkipEmpty {
+			results = append(results, result)
+		}
 	}
 
 	if err = outputFn(fg, results); err != nil {

@@ -1,12 +1,13 @@
 package main
 
 type Config struct {
-	Dirs     string
-	Type     string
-	Format   string
-	Authors  string
-	From, To string
-	Output   string
+	Dirs      string
+	Type      string
+	Format    string
+	Authors   string
+	From, To  string
+	Output    string
+	SkipEmpty bool
 }
 
 type RepoCommitCollection struct {
