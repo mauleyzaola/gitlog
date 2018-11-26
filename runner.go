@@ -22,7 +22,7 @@ func runGitLog(directory string) (io.Reader, error) {
 	cmd.Stderr = stdErr
 	cmd.Stdout = stdOut
 	if err := cmd.Run(); err != nil {
-		glog.Error(stdErr.String())
+		glog.V(4).Infoln(stdErr.String())
 		return nil, err
 	}
 	return stdOut, nil

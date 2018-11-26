@@ -185,7 +185,7 @@ function drawAuthorSummary(params){
 }
 
 var raw = document.getElementById('raw');
-var data = JSON.parse(raw.innerHTML);
+var data = JSON.parse(raw.innerHTML) || [];
 
 drawCommitsYearMonthTimeline({
     series: calcCommitPerMonth(data),

@@ -97,5 +97,5 @@ func main() {
 		glog.Exit(err)
 	}
 
-	glog.V(2).Infoln("total time elapsed:", time.Since(started))
+	glog.V(1).Infoln("total time elapsed:", time.Since(started))
 }
