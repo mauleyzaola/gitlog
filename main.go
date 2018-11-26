@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/mauleyzaola/gitlog/outputs"
@@ -60,6 +61,8 @@ func main() {
 		glog.Exit("unsupported output:", config.Type)
 	}
 
+	started := time.Now()
+
 	fg, err := outputs.NewFileGenerator()
 	if err != nil {
 		glog.Exitln(err)
@@ -93,4 +96,6 @@ func main() {
 	if err = outputFn(fg, results); err != nil {
 		glog.Exit(err)
 	}
+
+	glog.V(2).Infoln("total time elapsed:", time.Since(started))
 }
