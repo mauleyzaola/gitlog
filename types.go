@@ -6,6 +6,7 @@ type Config struct {
 	Format   string
 	Authors  string
 	From, To string
+	Output   string
 }
 
 type RepoCommitCollection struct {
