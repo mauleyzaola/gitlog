@@ -25,7 +25,12 @@ CommitDate: 2018-08-26T01:04:55-05:00
 `
 	repoName := "unit-tests"
 	buffer := bytes.NewBufferString(source)
-	_, res, err := ParseCommitLines(repoName, &Config{}, buffer)
+	params := &TypeFuncParams{
+		name:    repoName,
+		config:  &Config{},
+		commits: buffer,
+	}
+	_, res, err := ParseCommitLines(params)
 	if err != nil {
 		t.Error(err)
 		return
@@ -102,7 +107,12 @@ CommitDate: 2018-08-28T18:01:18-05:00
 `
 	buffer := bytes.NewBufferString(source)
 	repoName := "unit-tests"
-	_, res, err := ParseCommitLines(repoName, &Config{}, buffer)
+	params := &TypeFuncParams{
+		name:    repoName,
+		config:  &Config{},
+		commits: buffer,
+	}
+	_, res, err := ParseCommitLines(params)
 	if err != nil {
 		t.Error(err)
 		return
