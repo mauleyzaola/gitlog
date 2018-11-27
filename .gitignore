@@ -7,3 +7,6 @@
 # packrd build files
 packrd/
 outputs/outputs-packr.go
+
+# deployment files
+deploy/
