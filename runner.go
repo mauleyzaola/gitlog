@@ -16,6 +16,8 @@ func runGitLog(directory string) (io.Reader, error) {
 	params := []string{fmt.Sprintf("--git-dir=%s", filepath.Join(directory, ".git"))}
 	params = append(params, strings.Fields("log --no-merges  --pretty=fuller --date=iso-strict --numstat")...)
 
+	//glog.V(4).Infoln("params:", params)
+
 	cmd := exec.Command("git", params...)
 	stdErr := &bytes.Buffer{}
 	stdOut := &bytes.Buffer{}

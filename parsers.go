@@ -8,15 +8,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
 // Returns true on first return parameter if there was data available
-func ParseCommitLines(name string, config *Config, r interface{}) (bool, interface{}, error) {
-	reader, ok := r.(io.Reader)
+func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
+	// name, repoPath string, config *Config, r interface{}
+	reader, ok := params.commits.(io.Reader)
 	if !ok {
-		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", r)
+		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", params.commits)
 	}
 
 	scanner := bufio.NewScanner(reader)
@@ -27,11 +30,11 @@ func ParseCommitLines(name string, config *Config, r interface{}) (bool, interfa
 		from, to         *time.Time
 	)
 
-	from, err := parseDate(config.From)
+	from, err := parseDate(params.config.From)
 	if err != nil {
 		return false, nil, err
 	}
-	to, err = parseDate(config.To)
+	to, err = parseDate(params.config.To)
 	if err != nil {
 		return false, nil, err
 	}
@@ -69,8 +72,8 @@ func ParseCommitLines(name string, config *Config, r interface{}) (bool, interfa
 	tmp := Commits(commits)
 
 	// apply filters
-	if len(config.Authors) != 0 {
-		tmp = tmp.Filter(strings.Fields(config.Authors), nil, nil)
+	if len(params.config.Authors) != 0 {
+		tmp = tmp.Filter(strings.Fields(params.config.Authors), nil, nil)
 	}
 
 	if from != nil {
@@ -80,6 +83,8 @@ func ParseCommitLines(name string, config *Config, r interface{}) (bool, interfa
 		tmp = tmp.Filter(nil, nil, to)
 	}
 
+	files := tmp.ReadFiles(params.fullPath)
+
 	sort.Sort(tmp)
 
 	if len(tmp) == 0 {
@@ -87,10 +92,11 @@ func ParseCommitLines(name string, config *Config, r interface{}) (bool, interfa
 	}
 
 	return len(tmp) != 0, &RepoCommitCollection{
-		Name:    name,
-		Commits: tmp,
-		MinDate: minDate.Unix(),
-		MaxDate: maxDate.Unix(),
+		Name:     params.name,
+		Commits:  tmp,
+		MinDate:  minDate.Unix(),
+		MaxDate:  maxDate.Unix(),
+		FileStat: tmp.FilesToMap(files),
 	}, nil
 }
 
@@ -113,6 +119,9 @@ func ParseLine(commit *Commit, line string) {
 	if len(fields) == 0 {
 		return
 	}
+
+	glog.V(4).Infoln("line:", line)
+
 	switch strings.ToLower(fields[0]) {
 	case "commit":
 		if len(fields) >= 2 {
@@ -140,20 +149,22 @@ func ParseLine(commit *Commit, line string) {
 	case "commit:":
 	case "commitdate:":
 	default:
-		ok, added, deleted := numStat(line)
+		ok, added, deleted, fileName := numStat(line)
+
 		if !ok && len(commit.Comment) == 0 {
 			commit.Comment = strings.Join(fields, " ")
 			return
-		} else if ok {
+		}
+		if ok {
 			commit.Added += added
 			commit.Deleted += deleted
-			return
+			commit.Changes = append(commit.Changes, Change{Added: int(added), Deleted: int(deleted), Filename: fileName})
 		}
 	}
 }
 
-func numStat(line string) (ok bool, added, deleted int64) {
-	values := strings.Split(line, "\t")
+func numStat(line string) (ok bool, added, deleted int64, fileName string) {
+	values := strings.Fields(line)
 	if len(values) != 3 {
 		return
 	}
@@ -167,6 +178,7 @@ func numStat(line string) (ok bool, added, deleted int64) {
 		added = 0
 		return
 	}
+	fileName = values[2]
 	ok = true
 	return
 }

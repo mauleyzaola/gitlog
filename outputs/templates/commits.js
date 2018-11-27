@@ -1,3 +1,7 @@
+function sorter(a,b){
+    return (a.y < b.y) ? 1 : -1;
+}
+
 function dateToDay(row){
     var date = new Date(row);
     var year = date.getUTCFullYear().toString();
@@ -98,17 +102,53 @@ function calcAuthorDistributionSummary(data){
             author.count++;
         })
     })
-    
+
     for(var key in authors){
         res.push({
             name: key, // TODO: split @
             y: authors[key].count,
         })
     }
-    res.sort(function(a,b){
-        return (a.y < b.y) ? 1 : -1;
-    })
+    res.sort(sorter);
     return res;
+}
+
+function calcFileTypeDistribution(data){
+    var res = [];
+    var extensions = {};
+    data.forEach(function(r){
+        for(let ext in r.fileStat){
+            var extension = extensions[ext];
+            if(!extension){
+                extension = { size:0, count: 0 };
+                extensions[ext] = extension;
+            }
+            extension.size += r.fileStat[ext].size;
+            extension.count += r.fileStat[ext].count;
+        }
+    });
+
+    var sizes = [];
+    var counts = [];
+
+    for(let ext in extensions){
+        sizes.push({
+            name: ext,
+            y: extensions[ext].size,
+        });
+        counts.push({
+            name: ext,
+            y: extensions[ext].count,
+        })
+    }
+
+    sizes.sort(sorter);
+    counts.sort(sorter);
+
+    return {
+        sizes,
+        counts,
+    }
 }
 
 function drawCommitsYearMonthTimeline(params){
@@ -174,10 +214,49 @@ function drawAuthorSummary(params){
                         color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
                     }
                 }
-            }
+            },
         },
         series: [{
             name: 'Commits',
+            colorByPoint: true,
+            data: params.data,
+        }]
+    });
+}
+
+function drawFileTypeCountSummary(params){
+    Highcharts.chart(params.element, {
+        credits: false,
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        title: {
+            text: params.title
+        },
+        subtitle: {
+            text: params.subtitle,
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    style: {
+                        color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                    }
+                }
+            }
+        },
+        series: [{
+            name: 'Types',
             colorByPoint: true,
             data: params.data,
         }]
@@ -206,4 +285,18 @@ drawAuthorSummary({
     title: 'Distribution of Authors',
     subtitle: 'by counting the number of commits in all repositories',
     data: calcAuthorDistributionSummary(data),
+});
+
+var typeData = calcFileTypeDistribution(data);
+drawFileTypeCountSummary({
+    element: 'container-file-type-count-distribution',
+    title: 'Distribution of File Types',
+    subtitle: 'by counting the number of files for each type',
+    data: typeData.counts,
+});
+drawFileTypeCountSummary({
+    element: 'container-file-type-size-distribution',
+    title: 'Distribution of File Types',
+    subtitle: 'by adding the size for each file',
+    data: typeData.sizes,
 });

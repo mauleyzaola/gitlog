@@ -10,4 +10,5 @@ type Commit struct {
 	Comment string    `json:"-"`    // issues with JSON.parse(), need more rework
 	Added   int64     `json:"added"`
 	Deleted int64     `json:"removed"`
+	Changes []Change  `json:"changes"`
 }

@@ -11,6 +11,11 @@
             -webkit-user-select: none;
             -ms-user-select: none;
         }
+
+        .pie {
+            height: 600px;
+            width: 700px;
+        }
     </style>
 </head>
 
@@ -18,7 +23,9 @@
 <div style="width:95%;">
     <div id="container-monthly-commits"></div>
     <div id="container-monthly-commits-accum"></div>
-    <div id="container-author-distribution" style="width: 45%"></div>
+    <div id="container-author-distribution" class="pie" ></div>
+    <div id="container-file-type-count-distribution" class="pie" ></div>
+    <div id="container-file-type-size-distribution" class="pie" ></div>
 
     <div id="raw" style="display: none;">{{.Raw}}</div>
 </div>
