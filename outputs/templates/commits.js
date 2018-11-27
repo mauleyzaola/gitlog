@@ -41,7 +41,6 @@ function groupCommitsByMonth(commits){
     return series;
 }
 
-
 function calcCommitPerMonthAccum(data){
     var series = [];
     data.forEach(function(s) {
@@ -86,6 +85,75 @@ function calcCommitPerMonth(data){
         );
     });
     return series;
+}
+
+function groupCommitsByMonthByAuthor(data){
+    var authorKeys = {};
+    var authors = [];
+    var seriesCount = [];
+    var seriesAccum = [];
+    data.forEach(function(s){
+        (s.commits || []).forEach(function(c){
+            var a = c.author.email;
+            var d = dateToDay(c.date);
+            var author = authorKeys[a];
+            if(!author){
+                author = {
+                    dates: {},
+                }
+                authorKeys[a] = author;
+            }
+            var date = author.dates[d];
+            if(!date){
+                date = { count: 0};
+                author.dates[d] = date;
+            }
+            date.count++;
+        })
+    })
+    for(let key in authorKeys){
+        var curr = authorKeys[key];
+        var author = {
+            author: key,
+            dates: [],
+        };
+        for(let keyd in curr.dates){
+            author.dates.push({
+                date: keyd,
+                count: curr.dates[keyd].count,
+            });
+        }
+        author.dates.sort(function(a,b){
+            return (a.date > b.date) ? 1 : -1;
+        })
+        authors.push(author);
+    }
+    authors.forEach(function(x){
+        seriesCount.push({
+            name: x.author,
+            data: x.dates.map(function(d){
+                return {
+                    x: moment(d.date).unix() * 1000,
+                    y: d.count,
+                }
+            }),
+        });
+        var accum = 0;
+        seriesAccum.push({
+            name: x.author,
+            data: x.dates.map(function(d){
+                accum += d.count;
+                return {
+                    x: moment(d.date).unix() * 1000,
+                    y: accum,
+                }
+            }),
+        });
+    })
+    return {
+        count: seriesCount,
+        accum: seriesAccum,
+    };
 }
 
 function calcAuthorDistributionSummary(data){
@@ -181,7 +249,7 @@ function drawCommitsYearMonthTimeline(params){
                 }
             },
         },
-        series: params.series,
+        series: params.data,
     });
 }
 
@@ -267,14 +335,14 @@ var raw = document.getElementById('raw');
 var data = JSON.parse(raw.innerHTML) || [];
 
 drawCommitsYearMonthTimeline({
-    series: calcCommitPerMonth(data),
+    data: calcCommitPerMonth(data),
     title: 'Commits by Year/Month',
     subtitle: 'for each repository',
     element: 'container-monthly-commits',
 });
 
 drawCommitsYearMonthTimeline({
-    series: calcCommitPerMonthAccum(data),
+    data: calcCommitPerMonthAccum(data),
     title: 'Commits by Year/Month',
     subtitle: 'Aggregate sum for each repository',
     element: 'container-monthly-commits-accum',
@@ -299,4 +367,18 @@ drawFileTypeCountSummary({
     title: 'Distribution of File Types',
     subtitle: 'by adding the size for each file',
     data: typeData.sizes,
+});
+
+var authorCommits = groupCommitsByMonthByAuthor(data);
+drawCommitsYearMonthTimeline({
+    element: 'container-monthly-commits-author',
+    title: 'Commits by Year/Month',
+    subtitle: 'for each author',
+    data: authorCommits.count,
+});
+drawCommitsYearMonthTimeline({
+    element: 'container-monthly-commits-accum-author',
+    title: 'Commits by Year/Month',
+    subtitle: 'aggregate sum for each author',
+    data: authorCommits.accum,
 });
