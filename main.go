@@ -34,7 +34,7 @@ func main() {
 		result   interface{}
 		results  []interface{}
 		outputFn func(*outputs.FileGenerator, interface{}) error
-		typeFn   func(name string, params *Config, commits interface{}) (bool, interface{}, error)
+		typeFn   func(*TypeFuncParams) (bool, interface{}, error)
 		err      error
 		ok       bool
 	)
@@ -83,7 +83,12 @@ func main() {
 		if err != nil {
 			glog.Exit(err)
 		}
-		ok, result, err = typeFn(repoName, config, gitResult)
+		ok, result, err = typeFn(&TypeFuncParams{
+			config:   config,
+			name:     repoName,
+			fullPath: repo,
+			commits:  gitResult,
+		})
 		if err != nil {
 			glog.Exit(err)
 		}

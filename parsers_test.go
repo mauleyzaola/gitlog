@@ -25,7 +25,12 @@ CommitDate: 2018-08-26T01:04:55-05:00
 `
 	repoName := "unit-tests"
 	buffer := bytes.NewBufferString(source)
-	_, res, err := ParseCommitLines(repoName, &Config{}, buffer)
+	params := &TypeFuncParams{
+		name:    repoName,
+		config:  &Config{},
+		commits: buffer,
+	}
+	_, res, err := ParseCommitLines(params)
 	if err != nil {
 		t.Error(err)
 		return
@@ -102,7 +107,12 @@ CommitDate: 2018-08-28T18:01:18-05:00
 `
 	buffer := bytes.NewBufferString(source)
 	repoName := "unit-tests"
-	_, res, err := ParseCommitLines(repoName, &Config{}, buffer)
+	params := &TypeFuncParams{
+		name:    repoName,
+		config:  &Config{},
+		commits: buffer,
+	}
+	_, res, err := ParseCommitLines(params)
 	if err != nil {
 		t.Error(err)
 		return
@@ -182,6 +192,7 @@ func TestCommit_ParseLine(t *testing.T) {
 	t.Run("commit hash", commitHash)
 	t.Run("blank", commitBlank)
 	t.Run("comment", commitComment)
+	t.Run("changes", commitChange)
 }
 
 func commitParseLineAuthor(t *testing.T) {
@@ -196,6 +207,25 @@ func commitParseLineAuthor(t *testing.T) {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
 	if expected, actual := "mauricio.leyzaola@gmail.com", c.Author.Email; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+}
+
+func commitChange(t *testing.T) {
+	c := &Commit{}
+	line := "235     4       commonpasswords/main.go"
+	ParseLine(c, line)
+
+	if expected, actual := 1, len(c.Changes); expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := 235, c.Changes[0].Added; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := 4, c.Changes[0].Deleted; expected != actual {
+		t.Errorf("expected:%v actual:%v", expected, actual)
+	}
+	if expected, actual := "commonpasswords/main.go", c.Changes[0].Filename; expected != actual {
 		t.Errorf("expected:%v actual:%v", expected, actual)
 	}
 }
@@ -277,7 +307,7 @@ func Test_IsNumStat(t *testing.T) {
 	}
 
 	for i, v := range cases {
-		ok, added, deleted := numStat(v.line)
+		ok, added, deleted, _ := numStat(v.line)
 		if expected, actual := v.expected, ok; expected != actual {
 			t.Errorf("[%d] - expected:%v actual:%v", i, expected, actual)
 		}
@@ -334,11 +364,15 @@ func TestParseDate(t *testing.T) {
 		} else {
 			if err != nil {
 				t.Errorf("[%d] - expected: nil actual: %s", i, err)
-			} else if c.expected == nil || actual == nil {
+				continue
+			}
+			if c.expected == nil || actual == nil {
 				if c.expected != actual {
 					t.Errorf("[%d] - expected:%v actual:%v", i, c.expected, actual)
 				}
-			} else if c.expected.Unix() != actual.Unix() {
+				continue
+			}
+			if c.expected.Unix() != actual.Unix() {
 				t.Errorf("[%d] - expected:%v actual:%v", i, c.expected, actual)
 			}
 		}
