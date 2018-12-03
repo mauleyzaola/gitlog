@@ -2,12 +2,12 @@ package outputs
 
 import (
 	"archive/zip"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/golang/glog"
-	"github.com/pkg/errors"
 )
 
 type ZipOutput struct {
