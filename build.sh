@@ -5,6 +5,8 @@ deployment="./deploy"
 tmp="tmp"
 zip="zip"
 
+dep ensure -v
+
 echo "building gitlog for deployment"
 declare -a systems=("darwin" "linux" "windows")
 
