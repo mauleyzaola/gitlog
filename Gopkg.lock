@@ -252,7 +252,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/gobuffalo/packr/v2",
-    "github.com/gobuffalo/packr/v2/file/resolver",
     "github.com/golang/glog",
   ]
   solver-name = "gps-cdcl"
