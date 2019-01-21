@@ -30,7 +30,7 @@ func (t *HTMLOutput) openUrl(uri string) error {
 	case "linux":
 		cmdName = "xdg-open"
 	case "windows":
-		return exec.Command(uri).Run()
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", uri).Start()
 	default:
 		return fmt.Errorf("unsupported OS:%s", runtime.GOOS)
 
