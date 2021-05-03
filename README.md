@@ -11,10 +11,7 @@ Data output can come out in different formats such as JSON, DB Engines, XML and 
 ## Installation
 
 ```
-go get -v github.com/gobuffalo/packr/v2/...
-go get -v github.com/mauleyzaola/gitlog
-dep ensure -v
-packr2 install && packr2 clean
+GO111MODULE=on go get github.com/mauleyzaola/gitlog
 ```
 
 ## Formats

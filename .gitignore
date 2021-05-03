@@ -10,7 +10,3 @@ outputs/outputs-packr.go
 
 # deployment files
 deploy/
-
-# Vendor files
-vendor/
-.vendor-new/
