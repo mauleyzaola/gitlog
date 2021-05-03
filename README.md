@@ -1,6 +1,5 @@
 # Gitlog
 
-[![Build Status](https://travis-ci.org/mauleyzaola/gitlog.svg?branch=master)](https://travis-ci.org/mauleyzaola/gitlog)
 
 Simple parsing of git repositories and get instant metrics in different formats.
 
