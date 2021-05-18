@@ -10,7 +10,7 @@ Data output can come out in different formats such as JSON, DB Engines, XML and 
 ## Installation
 
 ```
-GO111MODULE=on go get github.com/mauleyzaola/gitlog
+go get github.com/mauleyzaola/gitlog
 ```
 
 ## Formats
