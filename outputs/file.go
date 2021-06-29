@@ -1,18 +1,20 @@
 package outputs
 
 import (
+	"embed"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
-	"github.com/gobuffalo/packr/v2"
 	"github.com/golang/glog"
 )
+
+//go:embed templates
+var templateFiles embed.FS
 
 type FileGenerator struct{}
 
@@ -38,8 +40,15 @@ func (t *FileGenerator) parseFile(input string, file io.Writer, data interface{}
 	return tpl.Execute(file, data)
 }
 
-func (t *FileGenerator) templateBox() *packr.Box {
-	return packr.New("templates", "./templates")
+func (t *FileGenerator) readFile(name string) ([]byte, error) {
+	file, err := templateFiles.Open(name)
+	if err != nil {
+		glog.Error(err)
+		return nil, err
+	}
+	defer func() { _ = file.Close() }()
+
+	return io.ReadAll(file)
 }
 
 func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
@@ -54,23 +63,13 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 		return "", err
 	}
 
-	box := t.templateBox()
-	commits, err := box.Find("commits.js")
+	commits, err := t.readFile(filepath.Join("templates", "commits.js"))
 	if err != nil {
+		glog.Error(err)
 		return "", err
 	}
 
 	if err = ioutil.WriteFile(filepath.Join(dir, "charts.js"), commits, 0666); err != nil {
-		return "", err
-	}
-
-	// copy external libraries
-	if err = box.Walk(func(name string, file packr.File) error {
-		if strings.HasPrefix(name, "lib/") {
-			return ioutil.WriteFile(filepath.Join(dir, name), []byte(file.String()), 0600)
-		}
-		return nil
-	}); err != nil {
 		return "", err
 	}
 
@@ -92,12 +91,13 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 		string(data),
 	}
 
-	base, err := box.FindString("base.html")
+	base, err := t.readFile(filepath.Join("templates", "base.html"))
 	if err != nil {
+		glog.Error(err)
 		return "", err
 	}
 
-	if err = t.parseFile(base, file, raw); err != nil {
+	if err = t.parseFile(string(base), file, raw); err != nil {
 		return "", err
 	}
 	return dir, nil
