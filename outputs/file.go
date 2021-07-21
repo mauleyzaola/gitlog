@@ -25,7 +25,7 @@ func NewFileGenerator() (*FileGenerator, error) {
 func (t *FileGenerator) createDir() (string, error) {
 	ts := time.Now().Format("20060102150403")
 	dir := filepath.Join(os.TempDir(), ts)
-	if err := os.MkdirAll(filepath.Join(dir, "lib"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "lib"), os.ModePerm); err != nil {
 		return "", err
 	}
 	return dir, nil
