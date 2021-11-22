@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func runGitLog(directory string) (io.Reader, error) {
+func RunGitLog(directory string) (io.Reader, error) {
 	params := []string{fmt.Sprintf("--git-dir=%s", filepath.Join(directory, ".git"))}
 	params = append(params, strings.Fields("log --no-merges  --pretty=fuller --date=iso-strict --numstat")...)
 
@@ -30,7 +30,7 @@ func runGitLog(directory string) (io.Reader, error) {
 	return stdOut, nil
 }
 
-func repoNameFromPath(p string) (string, error) {
+func RepoNameFromPath(p string) (string, error) {
 	if p == "." {
 		dir, err := os.Getwd()
 		if err != nil {
@@ -41,7 +41,7 @@ func repoNameFromPath(p string) (string, error) {
 	return filepath.Base(p), nil
 }
 
-func parseDirNames(dirs string) ([]string, error) {
+func ParseDirNames(dirs string) ([]string, error) {
 	var res []string
 	for _, dir := range strings.Fields(dirs) {
 		values, err := filepath.Glob(dir)

@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"bufio"
@@ -16,10 +16,10 @@ import (
 // If the format is not a valid one, an error is returned
 // Returns true on first return parameter if there was data available
 func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
-	// name, repoPath string, config *Config, r interface{}
-	reader, ok := params.commits.(io.Reader)
+	// name, repoPath string, config *FilterParameter, r interface{}
+	reader, ok := params.Commits.(io.Reader)
 	if !ok {
-		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", params.commits)
+		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", params.Commits)
 	}
 
 	scanner := bufio.NewScanner(reader)
@@ -30,11 +30,11 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 		from, to         *time.Time
 	)
 
-	from, err := parseDate(params.config.From)
+	from, err := parseDate(params.Config.From)
 	if err != nil {
 		return false, nil, err
 	}
-	to, err = parseDate(params.config.To)
+	to, err = parseDate(params.Config.To)
 	if err != nil {
 		return false, nil, err
 	}
@@ -72,8 +72,8 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 	tmp := Commits(commits)
 
 	// apply filters
-	if len(params.config.Authors) != 0 {
-		tmp = tmp.Filter(strings.Fields(params.config.Authors), nil, nil)
+	if len(params.Config.Authors) != 0 {
+		tmp = tmp.Filter(strings.Fields(params.Config.Authors), nil, nil)
 	}
 
 	if from != nil {
@@ -83,7 +83,7 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 		tmp = tmp.Filter(nil, nil, to)
 	}
 
-	files := tmp.ReadFiles(params.fullPath)
+	files := tmp.ReadFiles(params.FullPath)
 
 	sort.Sort(tmp)
 
@@ -92,7 +92,7 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 	}
 
 	return len(tmp) != 0, &RepoCommitCollection{
-		Name:     params.name,
+		Name:     params.Name,
 		Commits:  tmp,
 		MinDate:  minDate.Unix(),
 		MaxDate:  maxDate.Unix(),

@@ -1,6 +1,7 @@
-package main
+package internal
 
-type Config struct {
+// FilterParameter is used as container for cli options
+type FilterParameter struct {
 	Dirs      string
 	Type      string
 	Format    string
@@ -29,9 +30,9 @@ type RepoFileInfo struct {
 }
 
 type TypeFuncParams struct {
-	config   *Config
-	name     string
-	fullPath string
-	params   *Config
-	commits  interface{}
+	Config   *FilterParameter
+	Name     string
+	FullPath string
+	Params   *FilterParameter
+	Commits  interface{}
 }
