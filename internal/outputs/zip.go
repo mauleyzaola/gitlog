@@ -3,7 +3,6 @@ package outputs
 import (
 	"archive/zip"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -15,7 +14,7 @@ type ZipOutput struct {
 }
 
 func NewZipOutput(file string) (*ZipOutput, error) {
-	if len(file) == 0 {
+	if file == "" {
 		return nil, errors.New("missing filename. cannot generate zip files from empty target")
 	}
 	return &ZipOutput{
@@ -43,21 +42,21 @@ func (t *ZipOutput) DisplayCommits(fg *FileGenerator, v interface{}) error {
 		}
 	}()
 
-	if err = t.addFiles(zipWriter, dir, ""); err != nil {
-		return err
+	if errFile := t.addFiles(zipWriter, dir, ""); errFile != nil {
+		return errFile
 	}
 	return nil
 }
 
 func (t *ZipOutput) addFiles(w *zip.Writer, basePath, baseInZip string) error {
-	files, err := ioutil.ReadDir(basePath)
+	files, err := os.ReadDir(basePath)
 	if err != nil {
 		return err
 	}
 
 	for _, file := range files {
 		if !file.IsDir() {
-			dat, err := ioutil.ReadFile(filepath.Join(basePath, file.Name()))
+			dat, err := os.ReadFile(filepath.Join(basePath, file.Name()))
 			if err != nil {
 				return err
 			}

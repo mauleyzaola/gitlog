@@ -1,22 +1,19 @@
-package main
+package git
 
 import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/golang/glog"
 )
 
-func runGitLog(directory string) (io.Reader, error) {
+func RunGitLog(directory string) (io.Reader, error) {
 	params := []string{fmt.Sprintf("--git-dir=%s", filepath.Join(directory, ".git"))}
 	params = append(params, strings.Fields("log --no-merges  --pretty=fuller --date=iso-strict --numstat")...)
-
-	//glog.V(4).Infoln("params:", params)
 
 	cmd := exec.Command("git", params...)
 	stdErr := &bytes.Buffer{}
@@ -24,13 +21,13 @@ func runGitLog(directory string) (io.Reader, error) {
 	cmd.Stderr = stdErr
 	cmd.Stdout = stdOut
 	if err := cmd.Run(); err != nil {
-		glog.V(4).Infoln(stdErr.String())
+		log.Println(stdErr.String())
 		return nil, err
 	}
 	return stdOut, nil
 }
 
-func repoNameFromPath(p string) (string, error) {
+func RepoNameFromPath(p string) (string, error) {
 	if p == "." {
 		dir, err := os.Getwd()
 		if err != nil {
@@ -41,7 +38,7 @@ func repoNameFromPath(p string) (string, error) {
 	return filepath.Base(p), nil
 }
 
-func parseDirNames(dirs string) ([]string, error) {
+func ParseDirNames(dirs string) ([]string, error) {
 	var res []string
 	for _, dir := range strings.Fields(dirs) {
 		values, err := filepath.Glob(dir)

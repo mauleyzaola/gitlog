@@ -19,10 +19,10 @@ func (t *HTMLOutput) DisplayCommits(fg *FileGenerator, v interface{}) error {
 		return err
 	}
 
-	return t.openUrl(filepath.Join(dirName, "index.html"))
+	return t.openURL(filepath.Join(dirName, "index.html"))
 }
 
-func (t *HTMLOutput) openUrl(uri string) error {
+func (t *HTMLOutput) openURL(uri string) error {
 	var cmdName string
 	switch runtime.GOOS {
 	case "darwin":
@@ -33,7 +33,6 @@ func (t *HTMLOutput) openUrl(uri string) error {
 		return exec.Command("rundll32", "url.dll,FileProtocolHandler", uri).Start()
 	default:
 		return fmt.Errorf("unsupported OS:%s", runtime.GOOS)
-
 	}
 	return exec.Command(cmdName, uri).Run()
 }

@@ -28,7 +28,7 @@ gitlog
 
 ### JSON Format
 ```
-gitlog -format="json"
+gitlog report -format="json"
 ```
 Result is a JSON array of repository objects. Each one contains its name and an array of commits (merges are excluded).
 ```
@@ -39,18 +39,18 @@ The `-dirs` parameter allows to process more than one git repository. You can pa
 
 Path to repositories are local directories, and can be either absolute or relative. Directories must be separated by spaces like this.
 ```
-gitlog -dirs=". ../glog $GOPATH/src/github.com/mauleyzaola/challenge"
+gitlog report -dirs=". ../glog $GOPATH/src/github.com/mauleyzaola/challenge"
 ```
 
 Wildcards are also supported and `gitlog` will try to get as much information as possible. If for any reason it cannot accomplish the data retrieval, it will notify on stderr and continue working on the other directories.
 
 ```
-gitlog -dirs="../tak* . ../challenge"
+gitlog report -dirs="../tak* . ../challenge"
 ```
 
 The result goes to stdout, so it can be used as stdin another program using pipes. For instance `jq` to pretty format the result.
 ```bash
-gitlog -format="json" | jq .
+gitlog report -format="json" | jq .
 [
   {
     "name": "gitlog",
@@ -78,7 +78,7 @@ We can filter the commits by `author(s)` and by `date` range. Filters work as `A
 If we would want to filter by `author(s)` we can type in as many as needed, comma separated using the parameter `-authors` like this. Authors are identified by an exact match on the email.
 
 ```
-gitlog -authors="gusdevel@outlook.com susan@mail.com"
+gitlog report -authors="gusdevel@outlook.com susan@mail.com"
 ```
 
 ### Date Range (from,to)
@@ -86,9 +86,9 @@ gitlog -authors="gusdevel@outlook.com susan@mail.com"
 We can also restrict the commits by using a date range or just one date. The date format is `YYYYMMDD` and internaly gitlog will convert to the latest second of the day in UTC time.
 
 ```
-gitlog -from="20180522"
-gitlog -from="20180522" -to="20181031"
-gitlog -to="20180101"
+gitlog report -from="20180522"
+gitlog report -from="20180522" -to="20181031"
+gitlog report -to="20180101"
 ```
 
 ## Output
@@ -96,5 +96,5 @@ gitlog -to="20180101"
 Passing a value to `-output` parameter Gitlog can compress the results into a zip file for easy distributing results.
 
 ```
-gitlog -output="/Users/mau/Downloads/results.zip"
+gitlog report -output="/Users/mau/Downloads/results.zip"
 ```

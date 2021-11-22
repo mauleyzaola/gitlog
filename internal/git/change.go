@@ -1,4 +1,4 @@
-package main
+package git
 
 // Change: represents the file name with full path, the number of additions and the number of removals
 type Change struct {

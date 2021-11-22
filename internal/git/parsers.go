@@ -1,25 +1,31 @@
-package main
+package git
 
 import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/golang/glog"
 )
 
+const (
+	baseNumber = 10
+	bitSize    = 64
+	commitMsg  = "commit"
+)
+
+// nolint: gocyclo
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
 // Returns true on first return parameter if there was data available
-func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
-	// name, repoPath string, config *Config, r interface{}
-	reader, ok := params.commits.(io.Reader)
+func ParseCommitLines(params *TypeFuncParams) (ok bool, result interface{}, err error) {
+	// name, repoPath string, config *FilterParameter, r interface{}
+	reader, ok := params.Commits.(io.Reader)
 	if !ok {
-		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", params.commits)
+		return false, nil, fmt.Errorf("cannot cast to io.Reader:%#v", params.Commits)
 	}
 
 	scanner := bufio.NewScanner(reader)
@@ -30,11 +36,11 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 		from, to         *time.Time
 	)
 
-	from, err := parseDate(params.config.From)
+	from, err = parseDate(params.Config.From)
 	if err != nil {
 		return false, nil, err
 	}
-	to, err = parseDate(params.config.To)
+	to, err = parseDate(params.Config.To)
 	if err != nil {
 		return false, nil, err
 	}
@@ -48,10 +54,10 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 			continue
 		}
 		hash := findHash(fields)
-		if len(hash) == 0 && curr == nil {
+		if hash == "" && curr == nil {
 			return false, nil, fmt.Errorf("wrong git structure")
 		}
-		if len(hash) != 0 {
+		if hash != "" {
 			if _, ok = hashes[hash]; !ok {
 				// new commit detected
 				curr = &Commit{Hash: hash}
@@ -72,8 +78,8 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 	tmp := Commits(commits)
 
 	// apply filters
-	if len(params.config.Authors) != 0 {
-		tmp = tmp.Filter(strings.Fields(params.config.Authors), nil, nil)
+	if params.Config.Authors != "" {
+		tmp = tmp.Filter(strings.Fields(params.Config.Authors), nil, nil)
 	}
 
 	if from != nil {
@@ -83,7 +89,7 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 		tmp = tmp.Filter(nil, nil, to)
 	}
 
-	files := tmp.ReadFiles(params.fullPath)
+	files := tmp.ReadFiles(params.FullPath)
 
 	sort.Sort(tmp)
 
@@ -92,7 +98,7 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 	}
 
 	return len(tmp) != 0, &RepoCommitCollection{
-		Name:     params.name,
+		Name:     params.Name,
 		Commits:  tmp,
 		MinDate:  minDate.Unix(),
 		MaxDate:  maxDate.Unix(),
@@ -101,13 +107,17 @@ func ParseCommitLines(params *TypeFuncParams) (bool, interface{}, error) {
 }
 
 func findHash(fields []string) string {
-	if len(fields) < 2 {
+	const (
+		hashSize      = 40
+		maxFieldCount = 2
+	)
+	if len(fields) < maxFieldCount {
 		return ""
 	}
-	if fields[0] != "commit" {
+	if fields[0] != commitMsg {
 		return ""
 	}
-	if len(fields[1]) == 40 {
+	if len(fields[1]) == hashSize {
 		return fields[1]
 	}
 	return ""
@@ -115,21 +125,26 @@ func findHash(fields []string) string {
 
 // ParseLine - keeps adding field data to the commit struct
 func ParseLine(commit *Commit, line string) {
+	const (
+		hasIndex      = 1
+		minFieldCount = 2
+		maxFieldCount = 3
+	)
 	fields := strings.Fields(line)
 	if len(fields) == 0 {
 		return
 	}
 
-	glog.V(4).Infoln("line:", line)
+	log.Println("line:", line)
 
 	switch strings.ToLower(fields[0]) {
-	case "commit":
-		if len(fields) >= 2 {
-			commit.Hash = fields[1]
+	case commitMsg:
+		if len(fields) >= minFieldCount {
+			commit.Hash = fields[hasIndex]
 			return
 		}
 	case "author:":
-		if len(fields) >= 3 {
+		if len(fields) >= maxFieldCount {
 			author := &Author{
 				Name:  strings.Join(fields[1:len(fields)-1], " "),
 				Email: fields[len(fields)-1],
@@ -139,7 +154,7 @@ func ParseLine(commit *Commit, line string) {
 			return
 		}
 	case "authordate:":
-		if len(fields) == 2 {
+		if len(fields) == minFieldCount {
 			value, err := time.Parse(time.RFC3339, fields[1])
 			if err == nil {
 				commit.Date = value
@@ -151,7 +166,7 @@ func ParseLine(commit *Commit, line string) {
 	default:
 		ok, added, deleted, fileName := numStat(line)
 
-		if !ok && len(commit.Comment) == 0 {
+		if !ok && commit.Comment == "" {
 			commit.Comment = strings.Join(fields, " ")
 			return
 		}
@@ -164,33 +179,38 @@ func ParseLine(commit *Commit, line string) {
 }
 
 func numStat(line string) (ok bool, added, deleted int64, fileName string) {
+	const (
+		fileNameIndex = 2
+		fieldCount    = 3
+	)
 	values := strings.Fields(line)
-	if len(values) != 3 {
+	if len(values) != fieldCount {
 		return
 	}
 	var err error
-	added, err = strconv.ParseInt(values[0], 10, 64)
+	added, err = strconv.ParseInt(values[0], baseNumber, bitSize)
 	if err != nil {
 		return
 	}
-	deleted, err = strconv.ParseInt(values[1], 10, 64)
+	deleted, err = strconv.ParseInt(values[1], baseNumber, bitSize)
 	if err != nil {
 		added = 0
 		return
 	}
-	fileName = values[2]
+	fileName = values[fileNameIndex]
 	ok = true
 	return
 }
 
 func parseDate(val string) (*time.Time, error) {
-	if len(val) == 0 {
+	const day = time.Hour * 24
+	if val == "" {
 		return nil, nil
 	}
 	date, err := time.Parse("20060102", val)
 	if err != nil {
 		return nil, err
 	}
-	date = date.Add(time.Hour * 24).Add(-time.Second)
+	date = date.Add(day).Add(-time.Second)
 	return &date, nil
 }

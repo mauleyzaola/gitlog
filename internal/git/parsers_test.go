@@ -1,4 +1,4 @@
-package main
+package git
 
 import (
 	"bytes"
@@ -26,9 +26,9 @@ CommitDate: 2018-08-26T01:04:55-05:00
 	repoName := "unit-tests"
 	buffer := bytes.NewBufferString(source)
 	params := &TypeFuncParams{
-		name:    repoName,
-		config:  &Config{},
-		commits: buffer,
+		Name:    repoName,
+		Config:  &FilterParameter{},
+		Commits: buffer,
 	}
 	_, res, err := ParseCommitLines(params)
 	if err != nil {
@@ -108,9 +108,9 @@ CommitDate: 2018-08-28T18:01:18-05:00
 	buffer := bytes.NewBufferString(source)
 	repoName := "unit-tests"
 	params := &TypeFuncParams{
-		name:    repoName,
-		config:  &Config{},
-		commits: buffer,
+		Name:    repoName,
+		Config:  &FilterParameter{},
+		Commits: buffer,
 	}
 	_, res, err := ParseCommitLines(params)
 	if err != nil {

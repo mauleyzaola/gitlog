@@ -1,4 +1,4 @@
-package main
+package git
 
 import (
 	"os"
@@ -79,7 +79,7 @@ func (t Commits) FilesToMap(files []*RepoFile) map[string]*RepoFileInfo {
 	res := make(map[string]*RepoFileInfo)
 	for _, f := range files {
 		ext := filepath.Ext(f.Name)
-		if len(ext) == 0 {
+		if ext == "" {
 			continue
 		}
 		val, ok := res[ext]
