@@ -31,7 +31,7 @@ pipeline {
                         '''
                     }
                 }
-                stage('tests'){
+                stage('linter'){
                     steps {
                         sh '''
                             make lint
