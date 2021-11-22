@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/mauleyzaola/gitlog/internal"
+	"github.com/mauleyzaola/gitlog/internal/git"
 	"github.com/mauleyzaola/gitlog/internal/outputs"
 	"github.com/spf13/cobra"
 )
@@ -45,7 +45,7 @@ func init() {
 }
 
 func runReportCommand(name string) error {
-	config := &internal.FilterParameter{
+	config := &git.FilterParameter{
 		Dirs:      ".",
 		Type:      "commits",
 		Format:    "html",
@@ -70,7 +70,7 @@ func runReportCommand(name string) error {
 		result   interface{}
 		results  []interface{}
 		outputFn func(*outputs.FileGenerator, interface{}) error
-		typeFn   func(*internal.TypeFuncParams) (bool, interface{}, error)
+		typeFn   func(*git.TypeFuncParams) (bool, interface{}, error)
 		err      error
 		ok       bool
 	)
@@ -91,7 +91,7 @@ func runReportCommand(name string) error {
 
 	switch config.Type {
 	case "commits":
-		typeFn = internal.ParseCommitLines
+		typeFn = git.ParseCommitLines
 		outputFn = output.DisplayCommits
 	default:
 		return fmt.Errorf("unsupported output: %s", config.Type)
@@ -104,22 +104,22 @@ func runReportCommand(name string) error {
 		return err
 	}
 
-	repos, err := internal.ParseDirNames(config.Dirs)
+	repos, err := git.ParseDirNames(config.Dirs)
 	if err != nil {
 		return err
 	}
 	for _, repo := range repos {
-		gitResult, err := internal.RunGitLog(repo)
+		gitResult, err := git.RunGitLog(repo)
 		if err != nil {
 			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, err)
 			continue
 		}
 
-		repoName, err := internal.RepoNameFromPath(repo)
+		repoName, err := git.RepoNameFromPath(repo)
 		if err != nil {
 			return err
 		}
-		ok, result, err = typeFn(&internal.TypeFuncParams{
+		ok, result, err = typeFn(&git.TypeFuncParams{
 			Config:   config,
 			Name:     repoName,
 			FullPath: repo,

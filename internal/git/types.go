@@ -1,4 +1,4 @@
-package internal
+package git
 
 // FilterParameter is used as container for cli options
 type FilterParameter struct {
