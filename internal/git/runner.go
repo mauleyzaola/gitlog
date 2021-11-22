@@ -4,19 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/golang/glog"
 )
 
 func RunGitLog(directory string) (io.Reader, error) {
 	params := []string{fmt.Sprintf("--git-dir=%s", filepath.Join(directory, ".git"))}
 	params = append(params, strings.Fields("log --no-merges  --pretty=fuller --date=iso-strict --numstat")...)
-
-	//glog.V(4).Infoln("params:", params)
 
 	cmd := exec.Command("git", params...)
 	stdErr := &bytes.Buffer{}
@@ -24,7 +21,7 @@ func RunGitLog(directory string) (io.Reader, error) {
 	cmd.Stderr = stdErr
 	cmd.Stdout = stdOut
 	if err := cmd.Run(); err != nil {
-		glog.V(4).Infoln(stdErr.String())
+		log.Println(stdErr.String())
 		return nil, err
 	}
 	return stdOut, nil

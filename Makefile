@@ -1,5 +1,5 @@
 DOCKER_IMAGE=jenkins-tests
-LINT_VERSION=v1.37.1
+LINT_VERSION=v1.43.0
 
 .PHONY:install
 install:

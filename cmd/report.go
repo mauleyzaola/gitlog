@@ -23,7 +23,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := runReportCommand(cmd.Name()); err != nil {
+		if err := runReportCommand(); err != nil {
 			return err
 		}
 		return nil
@@ -44,7 +44,7 @@ func init() {
 	// reportCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func runReportCommand(name string) error {
+func runReportCommand() error {
 	config := &git.FilterParameter{
 		Dirs:      ".",
 		Type:      "commits",
@@ -76,9 +76,9 @@ func runReportCommand(name string) error {
 	)
 
 	if config.Format == "json" {
-		output = outputs.NewJsonOutput()
+		output = outputs.NewJSONOutput()
 	} else if config.Format == "html" {
-		if len(config.Output) == 0 {
+		if config.Output == "" {
 			output = outputs.NewHTMLOutput()
 		} else {
 			if output, err = outputs.NewZipOutput(config.Output); err != nil {
@@ -109,24 +109,24 @@ func runReportCommand(name string) error {
 		return err
 	}
 	for _, repo := range repos {
-		gitResult, err := git.RunGitLog(repo)
-		if err != nil {
-			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, err)
+		gitResult, errGl := git.RunGitLog(repo)
+		if errGl != nil {
+			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, errGl)
 			continue
 		}
 
-		repoName, err := git.RepoNameFromPath(repo)
-		if err != nil {
-			return err
+		repoName, errGl := git.RepoNameFromPath(repo)
+		if errGl != nil {
+			return errGl
 		}
-		ok, result, err = typeFn(&git.TypeFuncParams{
+		ok, result, errGl = typeFn(&git.TypeFuncParams{
 			Config:   config,
 			Name:     repoName,
 			FullPath: repo,
 			Commits:  gitResult,
 		})
-		if err != nil {
-			glog.Exit(err)
+		if errGl != nil {
+			glog.Exit(errGl)
 		}
 
 		if ok || !config.SkipEmpty {
@@ -134,8 +134,8 @@ func runReportCommand(name string) error {
 		}
 	}
 
-	if err = outputFn(fg, results); err != nil {
-		return err
+	if errOutput := outputFn(fg, results); errOutput != nil {
+		return errOutput
 	}
 
 	log.Println("total time elapsed:", time.Since(started))

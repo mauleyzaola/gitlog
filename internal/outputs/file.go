@@ -4,7 +4,6 @@ import (
 	"embed"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -69,8 +68,8 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 		return "", err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(dir, "charts.js"), commits, 0666); err != nil {
-		return "", err
+	if errFile := os.WriteFile(filepath.Join(dir, "charts.js"), commits, os.ModePerm); errFile != nil {
+		return "", errFile
 	}
 
 	fileName := filepath.Join(dir, "index.html")
@@ -97,8 +96,8 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 		return "", err
 	}
 
-	if err = t.parseFile(string(base), file, raw); err != nil {
-		return "", err
+	if errFile := t.parseFile(string(base), file, raw); errFile != nil {
+		return "", errFile
 	}
 	return dir, nil
 }

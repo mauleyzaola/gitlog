@@ -115,7 +115,7 @@ issues:
         - gochecknoinits
 run:
   # include test files or not, default is true
-  tests: true
+  tests: false
   #  TODO: apply linter rules to all these directories
   skip-dirs:
     - workspace

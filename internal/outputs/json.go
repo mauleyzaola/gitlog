@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-type JsonOutput struct{}
+type JSONOutput struct{}
 
-func NewJsonOutput() *JsonOutput {
-	return &JsonOutput{}
+func NewJSONOutput() *JSONOutput {
+	return &JSONOutput{}
 }
 
-func (t *JsonOutput) DisplayCommits(fg *FileGenerator, v interface{}) error {
+func (t *JSONOutput) DisplayCommits(fg *FileGenerator, v interface{}) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err

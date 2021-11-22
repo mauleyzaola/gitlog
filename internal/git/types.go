@@ -12,11 +12,12 @@ type FilterParameter struct {
 }
 
 type RepoCommitCollection struct {
-	Name     string                   `json:"name"`
-	Commits  []*Commit                `json:"commits"`
-	MinDate  int64                    `json:"minDate"`
-	MaxDate  int64                    `json:"maxDate"`
-	FileStat map[string]*RepoFileInfo `json:"fileStat"` // each key is the extension and the value is the sum of its sizes and the count of each file type
+	Name    string    `json:"name"`
+	Commits []*Commit `json:"commits"`
+	MinDate int64     `json:"minDate"`
+	MaxDate int64     `json:"maxDate"`
+	// each key is the extension and the value is the sum of its sizes and the count of each file type
+	FileStat map[string]*RepoFileInfo `json:"fileStat"`
 }
 
 type RepoFile struct {
