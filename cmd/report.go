@@ -47,6 +47,7 @@ func init() {
 	reportCmd.Flags().StringP("format", "", "html", "path to file for storing results")
 }
 
+//nolint:gocyclo
 func runReportCommand(dirs []string) error {
 	config := &git.FilterParameter{
 		Type:      "commits",
