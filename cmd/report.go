@@ -34,6 +34,7 @@ gitlog report . --format=json
 			"from",
 			"to",
 			"type",
+			"verbose",
 		}
 		for _, v := range flagNames {
 			if err := viper.BindPFlag(v, cmd.Flags().Lookup(v)); err != nil {
@@ -57,6 +58,7 @@ func init() {
 	reportCmd.Flags().StringP("from", "", "", "filters by start date [YYYYMMDD]")
 	reportCmd.Flags().StringP("to", "", "", "filters by end date [YYYYMMDD]")
 	reportCmd.Flags().StringP("type", "", "commits", "type of output [commits]")
+	reportCmd.Flags().BoolP("verbose", "v", false, "verbose output")
 }
 
 //nolint:gocyclo
@@ -81,6 +83,8 @@ func runReportCommand(dirs []string) error {
 			from, to *time.Time,
 			params *git.TypeFuncParams,
 		) (bool, interface{}, error)
+		verbose = viper.GetBool("verbose")
+
 		err error
 		ok  bool
 	)
@@ -133,7 +137,9 @@ func runReportCommand(dirs []string) error {
 	for _, repo := range repos {
 		gitResult, errGl := git.RunGitLog(repo)
 		if errGl != nil {
-			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, errGl)
+			if verbose {
+				glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, errGl)
+			}
 			continue
 		}
 
@@ -162,7 +168,9 @@ func runReportCommand(dirs []string) error {
 		return errOutput
 	}
 
-	log.Println("total time elapsed:", time.Since(started))
+	if verbose {
+		log.Println("total time elapsed:", time.Since(started))
+	}
 	return nil
 }
 
