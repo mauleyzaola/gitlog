@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 
 	"github.com/golang/glog"
 	"github.com/mauleyzaola/gitlog/internal/git"
@@ -15,15 +18,24 @@ import (
 // reportCmd represents the report command
 var reportCmd = &cobra.Command{
 	Use:   "report",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Generates a report output",
+	Long: `report command reads from one or more git directories and outputs
+HTML or JSON. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+gitlog report
+gitlog report . --format=json
+		`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return initializeConfig(cmd)
+	},
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if err := viper.BindPFlag("format", cmd.Flags().Lookup("format")); err != nil {
+			return err
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := runReportCommand(); err != nil {
+		if err := runReportCommand(args); err != nil {
 			return err
 		}
 		return nil
@@ -32,67 +44,60 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(reportCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// reportCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// reportCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	reportCmd.Flags().StringP("format", "", "html", "path to file for storing results")
 }
 
-func runReportCommand() error {
+func runReportCommand(dirs []string) error {
 	config := &git.FilterParameter{
-		Dirs:      ".",
 		Type:      "commits",
-		Format:    "html",
 		Authors:   "",
-		Output:    "",
 		SkipEmpty: true,
 	}
 
-	flag.StringVar(&config.Dirs, "dirs", config.Dirs, "the path(s) to the the git repository")
+	if len(dirs) == 0 {
+		// add current path
+		dirs = []string{"."}
+	}
+
 	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
-	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
 	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
 	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
 	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
-	flag.StringVar(&config.Output, "output", config.Output, "path to file for storing results")
 	flag.BoolVar(&config.SkipEmpty, "skip-empty", config.SkipEmpty, "skip repositories with empty data sets")
 
 	flag.Parse()
 
 	var (
-		output   outputs.Output
-		result   interface{}
-		results  []interface{}
-		outputFn func(*outputs.FileGenerator, interface{}) error
-		typeFn   func(*git.TypeFuncParams) (bool, interface{}, error)
-		err      error
-		ok       bool
+		format     = viper.GetString("format")
+		fileOutput outputs.Output
+		result     interface{}
+		results    []interface{}
+		output     = viper.GetString("output")
+		outputFn   func(*outputs.FileGenerator, interface{}) error
+		typeFn     func(*git.TypeFuncParams) (bool, interface{}, error)
+		err        error
+		ok         bool
 	)
 
-	if config.Format == "json" {
-		output = outputs.NewJSONOutput()
-	} else if config.Format == "html" {
-		if config.Output == "" {
-			output = outputs.NewHTMLOutput()
+	switch format {
+	case "html":
+		if viper.GetString("output") == "" {
+			fileOutput = outputs.NewHTMLOutput()
 		} else {
-			if output, err = outputs.NewZipOutput(config.Output); err != nil {
+			if fileOutput, err = outputs.NewZipOutput(output); err != nil {
 				return err
 			}
 		}
-	} else {
-		return fmt.Errorf("unsupported format: %s", config.Format)
+	case "json":
+		fileOutput = outputs.NewJSONOutput()
+	default:
+		return fmt.Errorf("unsupported format: %s", format)
 	}
 
 	switch config.Type {
 	case "commits":
 		typeFn = git.ParseCommitLines
-		outputFn = output.DisplayCommits
+		outputFn = fileOutput.DisplayCommits
 	default:
 		return fmt.Errorf("unsupported output: %s", config.Type)
 	}
@@ -104,7 +109,7 @@ func runReportCommand() error {
 		return err
 	}
 
-	repos, err := git.ParseDirNames(config.Dirs)
+	repos, err := git.ParseDirNames(strings.Join(dirs, " "))
 	if err != nil {
 		return err
 	}

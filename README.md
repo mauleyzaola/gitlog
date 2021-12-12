@@ -20,37 +20,37 @@ go install github.com/mauleyzaola/gitlog@latest
 This is the default format and will execute from current working directory if no parameters are specified.
 
 ```bash
-gitlog
+gitlog report
 ```
 ![alt tag](assets/commits-timeline-sample.png)
 ![alt tag](assets/commits-timeline-accum-sample.png)
 ![alt tag](assets/pie-authors-sample.png)
 
+You can provide more that one directory, gitlog will try to find any git directories based on those parameters you provide
+
+```bash
+gitlog report ~/go/src/github.com/mauleyzaola/gitlog .
+```
+
+Also wildcards are allowed
+
+```bash
+gitlog report *
+```
+
+
 ### JSON Format
 ```
-gitlog report -format="json"
+gitlog report --format="json"
 ```
 Result is a JSON array of repository objects. Each one contains its name and an array of commits (merges are excluded).
 ```
 [{"name":"gitlog","commits":[{"hash":"0029751209fe88abe4080f241bd77fee5d0c16bd","author":{"name":"Mauricio Leyzaola","email":"mauricio.leyzaola@gmail.com"},"date":"2018-09-01T21:40:03-05:00","added":52,"removed":0},...
 ```
 
-The `-dirs` parameter allows to process more than one git repository. You can pass any number of repositories. When using `html` format it might not be a good idea abuse this feature.
-
-Path to repositories are local directories, and can be either absolute or relative. Directories must be separated by spaces like this.
-```
-gitlog report -dirs=". ../glog $GOPATH/src/github.com/mauleyzaola/challenge"
-```
-
-Wildcards are also supported and `gitlog` will try to get as much information as possible. If for any reason it cannot accomplish the data retrieval, it will notify on stderr and continue working on the other directories.
-
-```
-gitlog report -dirs="../tak* . ../challenge"
-```
-
 The result goes to stdout, so it can be used as stdin another program using pipes. For instance `jq` to pretty format the result.
 ```bash
-gitlog report -format="json" | jq .
+gitlog report --format="json" | jq .
 [
   {
     "name": "gitlog",
@@ -89,12 +89,4 @@ We can also restrict the commits by using a date range or just one date. The dat
 gitlog report -from="20180522"
 gitlog report -from="20180522" -to="20181031"
 gitlog report -to="20180101"
-```
-
-## Output
-
-Passing a value to `-output` parameter Gitlog can compress the results into a zip file for easy distributing results.
-
-```
-gitlog report -output="/Users/mau/Downloads/results.zip"
 ```

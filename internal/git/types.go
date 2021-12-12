@@ -2,12 +2,9 @@ package git
 
 // FilterParameter is used as container for cli options
 type FilterParameter struct {
-	Dirs      string
 	Type      string
-	Format    string
 	Authors   string
 	From, To  string
-	Output    string
 	SkipEmpty bool
 }
 
