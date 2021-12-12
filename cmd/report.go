@@ -32,6 +32,8 @@ gitlog report . --format=json
 		var flagNames = []string{
 			"authors",
 			"format",
+			"from",
+			"to",
 			"type",
 		}
 		for _, v := range flagNames {
@@ -53,6 +55,8 @@ func init() {
 	rootCmd.AddCommand(reportCmd)
 	reportCmd.Flags().StringP("authors", "", "", "filter commits by the author(s)")
 	reportCmd.Flags().StringP("format", "", "html", "path to file for storing results")
+	reportCmd.Flags().StringP("from", "", "", "filters by start date [YYYYMMDD]")
+	reportCmd.Flags().StringP("to", "", "", "filters by end date [YYYYMMDD]")
 	reportCmd.Flags().StringP("type", "", "commits", "type of output [commits]")
 }
 
@@ -67,8 +71,6 @@ func runReportCommand(dirs []string) error {
 		dirs = []string{"."}
 	}
 
-	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
-	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
 	flag.BoolVar(&config.SkipEmpty, "skip-empty", config.SkipEmpty, "skip repositories with empty data sets")
 
 	flag.Parse()
@@ -77,14 +79,19 @@ func runReportCommand(dirs []string) error {
 		authors    = viper.GetString("authors")
 		format     = viper.GetString("format")
 		fileOutput outputs.Output
+		from, to   *time.Time
 		result     interface{}
 		results    []interface{}
 		output     = viper.GetString("output")
 		outputFn   func(*outputs.FileGenerator, interface{}) error
 		typeName   = viper.GetString("type")
-		typeFn     func(authors string, params *git.TypeFuncParams) (bool, interface{}, error)
-		err        error
-		ok         bool
+		typeFn     func(
+			authors string,
+			from, to *time.Time,
+			params *git.TypeFuncParams,
+		) (bool, interface{}, error)
+		err error
+		ok  bool
 	)
 
 	switch format {
@@ -108,6 +115,17 @@ func runReportCommand(dirs []string) error {
 		outputFn = fileOutput.DisplayCommits
 	default:
 		return fmt.Errorf("unsupported output: %s", typeName)
+	}
+
+	if val := viper.GetString("from"); val != "" {
+		if from, err = parseDate(val); err != nil {
+			return err
+		}
+	}
+	if val := viper.GetString("to"); val != "" {
+		if to, err = parseDate(val); err != nil {
+			return err
+		}
 	}
 
 	started := time.Now()
@@ -134,6 +152,7 @@ func runReportCommand(dirs []string) error {
 		}
 		ok, result, errGl = typeFn(
 			authors,
+			from, to,
 			&git.TypeFuncParams{
 				Config:   config,
 				Name:     repoName,
@@ -155,4 +174,18 @@ func runReportCommand(dirs []string) error {
 
 	log.Println("total time elapsed:", time.Since(started))
 	return nil
+}
+
+// TODO: move this functions somewhere else
+func parseDate(val string) (*time.Time, error) {
+	const day = time.Hour * 24
+	if val == "" {
+		return nil, nil
+	}
+	date, err := time.Parse("20060102", val)
+	if err != nil {
+		return nil, err
+	}
+	date = date.Add(day).Add(-time.Second)
+	return &date, nil
 }

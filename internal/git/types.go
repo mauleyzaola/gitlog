@@ -2,7 +2,6 @@ package git
 
 // FilterParameter is used as container for cli options
 type FilterParameter struct {
-	From, To  string
 	SkipEmpty bool
 }
 
