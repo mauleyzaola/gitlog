@@ -1,10 +1,5 @@
 package git
 
-// FilterParameter is used as container for cli options
-type FilterParameter struct {
-	SkipEmpty bool
-}
-
 type RepoCommitCollection struct {
 	Name    string    `json:"name"`
 	Commits []*Commit `json:"commits"`
@@ -25,9 +20,7 @@ type RepoFileInfo struct {
 }
 
 type TypeFuncParams struct {
-	Config   *FilterParameter
 	Name     string
 	FullPath string
-	Params   *FilterParameter
 	Commits  interface{}
 }

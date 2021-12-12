@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"strings"
@@ -62,18 +61,10 @@ func init() {
 
 //nolint:gocyclo
 func runReportCommand(dirs []string) error {
-	config := &git.FilterParameter{
-		SkipEmpty: true,
-	}
-
 	if len(dirs) == 0 {
 		// add current path
 		dirs = []string{"."}
 	}
-
-	flag.BoolVar(&config.SkipEmpty, "skip-empty", config.SkipEmpty, "skip repositories with empty data sets")
-
-	flag.Parse()
 
 	var (
 		authors    = viper.GetString("authors")
@@ -154,7 +145,6 @@ func runReportCommand(dirs []string) error {
 			authors,
 			from, to,
 			&git.TypeFuncParams{
-				Config:   config,
 				Name:     repoName,
 				FullPath: repo,
 				Commits:  gitResult,
@@ -163,7 +153,7 @@ func runReportCommand(dirs []string) error {
 			glog.Exit(errGl)
 		}
 
-		if ok || !config.SkipEmpty {
+		if ok {
 			results = append(results, result)
 		}
 	}

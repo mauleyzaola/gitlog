@@ -27,7 +27,6 @@ CommitDate: 2018-08-26T01:04:55-05:00
 	buffer := bytes.NewBufferString(source)
 	params := &TypeFuncParams{
 		Name:    repoName,
-		Config:  &FilterParameter{},
 		Commits: buffer,
 	}
 	_, res, err := ParseCommitLines("", nil, nil, params)
@@ -109,7 +108,6 @@ CommitDate: 2018-08-28T18:01:18-05:00
 	repoName := "unit-tests"
 	params := &TypeFuncParams{
 		Name:    repoName,
-		Config:  &FilterParameter{},
 		Commits: buffer,
 	}
 	_, res, err := ParseCommitLines("", nil, nil, params)
