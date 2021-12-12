@@ -29,8 +29,15 @@ gitlog report . --format=json
 		return initializeConfig(cmd)
 	},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := viper.BindPFlag("format", cmd.Flags().Lookup("format")); err != nil {
-			return err
+		var flagNames = []string{
+			"authors",
+			"format",
+			"type",
+		}
+		for _, v := range flagNames {
+			if err := viper.BindPFlag(v, cmd.Flags().Lookup(v)); err != nil {
+				return err
+			}
 		}
 		return nil
 	},
@@ -44,14 +51,14 @@ gitlog report . --format=json
 
 func init() {
 	rootCmd.AddCommand(reportCmd)
+	reportCmd.Flags().StringP("authors", "", "", "filter commits by the author(s)")
 	reportCmd.Flags().StringP("format", "", "html", "path to file for storing results")
+	reportCmd.Flags().StringP("type", "", "commits", "type of output [commits]")
 }
 
 //nolint:gocyclo
 func runReportCommand(dirs []string) error {
 	config := &git.FilterParameter{
-		Type:      "commits",
-		Authors:   "",
 		SkipEmpty: true,
 	}
 
@@ -60,8 +67,6 @@ func runReportCommand(dirs []string) error {
 		dirs = []string{"."}
 	}
 
-	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
-	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
 	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
 	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
 	flag.BoolVar(&config.SkipEmpty, "skip-empty", config.SkipEmpty, "skip repositories with empty data sets")
@@ -69,13 +74,15 @@ func runReportCommand(dirs []string) error {
 	flag.Parse()
 
 	var (
+		authors    = viper.GetString("authors")
 		format     = viper.GetString("format")
 		fileOutput outputs.Output
 		result     interface{}
 		results    []interface{}
 		output     = viper.GetString("output")
 		outputFn   func(*outputs.FileGenerator, interface{}) error
-		typeFn     func(*git.TypeFuncParams) (bool, interface{}, error)
+		typeName   = viper.GetString("type")
+		typeFn     func(authors string, params *git.TypeFuncParams) (bool, interface{}, error)
 		err        error
 		ok         bool
 	)
@@ -95,12 +102,12 @@ func runReportCommand(dirs []string) error {
 		return fmt.Errorf("unsupported format: %s", format)
 	}
 
-	switch config.Type {
+	switch typeName {
 	case "commits":
 		typeFn = git.ParseCommitLines
 		outputFn = fileOutput.DisplayCommits
 	default:
-		return fmt.Errorf("unsupported output: %s", config.Type)
+		return fmt.Errorf("unsupported output: %s", typeName)
 	}
 
 	started := time.Now()
@@ -125,12 +132,14 @@ func runReportCommand(dirs []string) error {
 		if errGl != nil {
 			return errGl
 		}
-		ok, result, errGl = typeFn(&git.TypeFuncParams{
-			Config:   config,
-			Name:     repoName,
-			FullPath: repo,
-			Commits:  gitResult,
-		})
+		ok, result, errGl = typeFn(
+			authors,
+			&git.TypeFuncParams{
+				Config:   config,
+				Name:     repoName,
+				FullPath: repo,
+				Commits:  gitResult,
+			})
 		if errGl != nil {
 			glog.Exit(errGl)
 		}

@@ -30,7 +30,7 @@ CommitDate: 2018-08-26T01:04:55-05:00
 		Config:  &FilterParameter{},
 		Commits: buffer,
 	}
-	_, res, err := ParseCommitLines(params)
+	_, res, err := ParseCommitLines("", params)
 	if err != nil {
 		t.Error(err)
 		return
@@ -112,7 +112,7 @@ CommitDate: 2018-08-28T18:01:18-05:00
 		Config:  &FilterParameter{},
 		Commits: buffer,
 	}
-	_, res, err := ParseCommitLines(params)
+	_, res, err := ParseCommitLines("", params)
 	if err != nil {
 		t.Error(err)
 		return

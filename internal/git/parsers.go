@@ -21,7 +21,7 @@ const (
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
 // Returns true on first return parameter if there was data available
-func ParseCommitLines(params *TypeFuncParams) (ok bool, result interface{}, err error) {
+func ParseCommitLines(authors string, params *TypeFuncParams) (ok bool, result interface{}, err error) {
 	// name, repoPath string, config *FilterParameter, r interface{}
 	reader, ok := params.Commits.(io.Reader)
 	if !ok {
@@ -78,8 +78,8 @@ func ParseCommitLines(params *TypeFuncParams) (ok bool, result interface{}, err 
 	tmp := Commits(commits)
 
 	// apply filters
-	if params.Config.Authors != "" {
-		tmp = tmp.Filter(strings.Fields(params.Config.Authors), nil, nil)
+	if authors != "" {
+		tmp = tmp.Filter(strings.Fields(authors), nil, nil)
 	}
 
 	if from != nil {
