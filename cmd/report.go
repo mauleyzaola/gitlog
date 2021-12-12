@@ -1,10 +1,12 @@
 package cmd
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 
 	"github.com/golang/glog"
 	"github.com/mauleyzaola/gitlog/internal/git"
@@ -15,15 +17,34 @@ import (
 // reportCmd represents the report command
 var reportCmd = &cobra.Command{
 	Use:   "report",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Generates a report output",
+	Long: `report command reads from one or more git directories and outputs
+HTML or JSON. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+gitlog report
+gitlog report . --format=json
+		`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return initializeConfig(cmd)
+	},
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		var flagNames = []string{
+			"authors",
+			"format",
+			"from",
+			"to",
+			"type",
+			"verbose",
+		}
+		for _, v := range flagNames {
+			if err := viper.BindPFlag(v, cmd.Flags().Lookup(v)); err != nil {
+				return err
+			}
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := runReportCommand(); err != nil {
+		if err := runReportCommand(args); err != nil {
 			return err
 		}
 		return nil
@@ -32,69 +53,74 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(reportCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// reportCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// reportCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	reportCmd.Flags().StringP("authors", "", "", "filter commits by the author(s)")
+	reportCmd.Flags().StringP("format", "", "html", "path to file for storing results")
+	reportCmd.Flags().StringP("from", "", "", "filters by start date [YYYYMMDD]")
+	reportCmd.Flags().StringP("to", "", "", "filters by end date [YYYYMMDD]")
+	reportCmd.Flags().StringP("type", "", "commits", "type of output [commits]")
+	reportCmd.Flags().BoolP("verbose", "v", false, "verbose output")
 }
 
-func runReportCommand() error {
-	config := &git.FilterParameter{
-		Dirs:      ".",
-		Type:      "commits",
-		Format:    "html",
-		Authors:   "",
-		Output:    "",
-		SkipEmpty: true,
+//nolint:gocyclo
+func runReportCommand(dirs []string) error {
+	if len(dirs) == 0 {
+		// add current path
+		dirs = []string{"."}
 	}
 
-	flag.StringVar(&config.Dirs, "dirs", config.Dirs, "the path(s) to the the git repository")
-	flag.StringVar(&config.Type, "type", config.Type, "the type of output to have: [commits]")
-	flag.StringVar(&config.Format, "format", config.Format, "the output format: [html|json]")
-	flag.StringVar(&config.Authors, "authors", config.Authors, "filters by author(s)")
-	flag.StringVar(&config.From, "from", config.From, "filters by start date [YYYYMMDD]")
-	flag.StringVar(&config.To, "to", config.To, "filters by end date [YYYYMMDD]")
-	flag.StringVar(&config.Output, "output", config.Output, "path to file for storing results")
-	flag.BoolVar(&config.SkipEmpty, "skip-empty", config.SkipEmpty, "skip repositories with empty data sets")
-
-	flag.Parse()
-
 	var (
-		output   outputs.Output
-		result   interface{}
-		results  []interface{}
-		outputFn func(*outputs.FileGenerator, interface{}) error
-		typeFn   func(*git.TypeFuncParams) (bool, interface{}, error)
-		err      error
-		ok       bool
+		authors    = viper.GetString("authors")
+		format     = viper.GetString("format")
+		fileOutput outputs.Output
+		from, to   *time.Time
+		result     interface{}
+		results    []interface{}
+		output     = viper.GetString("output")
+		outputFn   func(*outputs.FileGenerator, interface{}) error
+		typeName   = viper.GetString("type")
+		typeFn     func(
+			authors string,
+			from, to *time.Time,
+			params *git.TypeFuncParams,
+		) (bool, interface{}, error)
+		verbose = viper.GetBool("verbose")
+
+		err error
+		ok  bool
 	)
 
-	if config.Format == "json" {
-		output = outputs.NewJSONOutput()
-	} else if config.Format == "html" {
-		if config.Output == "" {
-			output = outputs.NewHTMLOutput()
+	switch format {
+	case "html":
+		if viper.GetString("output") == "" {
+			fileOutput = outputs.NewHTMLOutput()
 		} else {
-			if output, err = outputs.NewZipOutput(config.Output); err != nil {
+			if fileOutput, err = outputs.NewZipOutput(output); err != nil {
 				return err
 			}
 		}
-	} else {
-		return fmt.Errorf("unsupported format: %s", config.Format)
+	case "json":
+		fileOutput = outputs.NewJSONOutput()
+	default:
+		return fmt.Errorf("unsupported format: %s", format)
 	}
 
-	switch config.Type {
+	switch typeName {
 	case "commits":
 		typeFn = git.ParseCommitLines
-		outputFn = output.DisplayCommits
+		outputFn = fileOutput.DisplayCommits
 	default:
-		return fmt.Errorf("unsupported output: %s", config.Type)
+		return fmt.Errorf("unsupported output: %s", typeName)
+	}
+
+	if val := viper.GetString("from"); val != "" {
+		if from, err = parseDate(val); err != nil {
+			return err
+		}
+	}
+	if val := viper.GetString("to"); val != "" {
+		if to, err = parseDate(val); err != nil {
+			return err
+		}
 	}
 
 	started := time.Now()
@@ -104,14 +130,16 @@ func runReportCommand() error {
 		return err
 	}
 
-	repos, err := git.ParseDirNames(config.Dirs)
+	repos, err := git.ParseDirNames(strings.Join(dirs, " "))
 	if err != nil {
 		return err
 	}
 	for _, repo := range repos {
 		gitResult, errGl := git.RunGitLog(repo)
 		if errGl != nil {
-			glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, errGl)
+			if verbose {
+				glog.Warningf("cannot obtain git log information from directory:%s. %s", repo, errGl)
+			}
 			continue
 		}
 
@@ -119,17 +147,19 @@ func runReportCommand() error {
 		if errGl != nil {
 			return errGl
 		}
-		ok, result, errGl = typeFn(&git.TypeFuncParams{
-			Config:   config,
-			Name:     repoName,
-			FullPath: repo,
-			Commits:  gitResult,
-		})
+		ok, result, errGl = typeFn(
+			authors,
+			from, to,
+			&git.TypeFuncParams{
+				Name:     repoName,
+				FullPath: repo,
+				Commits:  gitResult,
+			})
 		if errGl != nil {
 			glog.Exit(errGl)
 		}
 
-		if ok || !config.SkipEmpty {
+		if ok {
 			results = append(results, result)
 		}
 	}
@@ -138,6 +168,22 @@ func runReportCommand() error {
 		return errOutput
 	}
 
-	log.Println("total time elapsed:", time.Since(started))
+	if verbose {
+		log.Println("total time elapsed:", time.Since(started))
+	}
 	return nil
+}
+
+// TODO: move this functions somewhere else
+func parseDate(val string) (*time.Time, error) {
+	const day = time.Hour * 24
+	if val == "" {
+		return nil, nil
+	}
+	date, err := time.Parse("20060102", val)
+	if err != nil {
+		return nil, err
+	}
+	date = date.Add(day).Add(-time.Second)
+	return &date, nil
 }

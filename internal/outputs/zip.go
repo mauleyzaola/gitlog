@@ -5,8 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-
-	"github.com/golang/glog"
 )
 
 type ZipOutput struct {
@@ -34,12 +32,8 @@ func (t *ZipOutput) DisplayCommits(fg *FileGenerator, v interface{}) error {
 
 	zipWriter := zip.NewWriter(zipFile)
 	defer func() {
-		if err = zipWriter.Close(); err != nil {
-			glog.Error(err)
-		}
-		if err = zipFile.Close(); err != nil {
-			glog.Error(err)
-		}
+		_ = zipWriter.Close()
+		_ = zipFile.Close()
 	}()
 
 	if errFile := t.addFiles(zipWriter, dir, ""); errFile != nil {

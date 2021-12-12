@@ -1,8 +1,16 @@
+def isProd
+
+if (BRANCH_NAME =~ /^(master)$/)  {
+    isProd = true
+} else{
+    isProd = false
+}
+
 pipeline {
     agent {
         docker { 
             // TODO: use a custom docker image in my own aws registry
-            image 'takasago/kaizen-jenkins-builder:latest' 
+            image 'mauleyzaola/docker-golang:latest'
             args '-u root --privileged -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -25,6 +33,11 @@ pipeline {
             failFast true
             parallel {
                 stage('tests'){
+                    when {
+                        expression {
+                            return !isProd
+                        }
+                    }
                     steps {
                         sh '''
                             make test
@@ -32,6 +45,11 @@ pipeline {
                     }
                 }
                 stage('linter'){
+                    when {
+                        expression {
+                            return !isProd
+                        }
+                    }
                     steps {
                         sh '''
                             make lint

@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"text/template"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 //go:embed templates
@@ -42,7 +40,6 @@ func (t *FileGenerator) parseFile(input string, file io.Writer, data interface{}
 func (t *FileGenerator) readFile(name string) ([]byte, error) {
 	file, err := templateFiles.Open(name)
 	if err != nil {
-		glog.Error(err)
 		return nil, err
 	}
 	defer func() { _ = file.Close() }()
@@ -64,7 +61,6 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 
 	commits, err := t.readFile(filepath.Join("templates", "commits.js"))
 	if err != nil {
-		glog.Error(err)
 		return "", err
 	}
 
@@ -79,9 +75,7 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 	}
 
 	defer func() {
-		if err = file.Close(); err != nil {
-			glog.Error(err)
-		}
+		_ = file.Close()
 	}()
 
 	raw := &struct {
@@ -92,7 +86,6 @@ func (t *FileGenerator) genCommitFiles(v interface{}) (string, error) {
 
 	base, err := t.readFile(filepath.Join("templates", "base.html"))
 	if err != nil {
-		glog.Error(err)
 		return "", err
 	}
 

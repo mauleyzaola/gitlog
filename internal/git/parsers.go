@@ -17,11 +17,14 @@ const (
 	commitMsg  = "commit"
 )
 
-// nolint: gocyclo
 // ParseCommitLines - Tries to convert a lines of text into a slice of Commits
 // If the format is not a valid one, an error is returned
 // Returns true on first return parameter if there was data available
-func ParseCommitLines(params *TypeFuncParams) (ok bool, result interface{}, err error) {
+func ParseCommitLines(
+	authors string,
+	from, to *time.Time,
+	params *TypeFuncParams,
+) (ok bool, result interface{}, err error) {
 	// name, repoPath string, config *FilterParameter, r interface{}
 	reader, ok := params.Commits.(io.Reader)
 	if !ok {
@@ -33,17 +36,7 @@ func ParseCommitLines(params *TypeFuncParams) (ok bool, result interface{}, err 
 		commits          []*Commit
 		curr             *Commit
 		minDate, maxDate time.Time
-		from, to         *time.Time
 	)
-
-	from, err = parseDate(params.Config.From)
-	if err != nil {
-		return false, nil, err
-	}
-	to, err = parseDate(params.Config.To)
-	if err != nil {
-		return false, nil, err
-	}
 
 	hashes := make(map[string]struct{})
 	for scanner.Scan() {
@@ -78,8 +71,8 @@ func ParseCommitLines(params *TypeFuncParams) (ok bool, result interface{}, err 
 	tmp := Commits(commits)
 
 	// apply filters
-	if params.Config.Authors != "" {
-		tmp = tmp.Filter(strings.Fields(params.Config.Authors), nil, nil)
+	if authors != "" {
+		tmp = tmp.Filter(strings.Fields(authors), nil, nil)
 	}
 
 	if from != nil {
@@ -200,17 +193,4 @@ func numStat(line string) (ok bool, added, deleted int64, fileName string) {
 	fileName = values[fileNameIndex]
 	ok = true
 	return
-}
-
-func parseDate(val string) (*time.Time, error) {
-	const day = time.Hour * 24
-	if val == "" {
-		return nil, nil
-	}
-	date, err := time.Parse("20060102", val)
-	if err != nil {
-		return nil, err
-	}
-	date = date.Add(day).Add(-time.Second)
-	return &date, nil
 }
